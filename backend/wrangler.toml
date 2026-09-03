@@ -1,0 +1,13 @@
+name = "asbury-backend"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+ENVIRONMENT = "production"
+
+# KV Namespace for booking holds
+# Create with: wrangler kv namespace create "BOOKING_HOLDS"
+# Then uncomment and fill in the id below
+# [[kv_namespaces]]
+# binding = "BOOKING_HOLDS"
+# id = "your_kv_namespace_id"
