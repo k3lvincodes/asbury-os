@@ -9,6 +9,7 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
+    "hono": "^4.0.0",
     "@supabase/supabase-js": "^2.39.3",
     "stripe": "^14.14.0",
     "cloudinary": "^1.41.0",

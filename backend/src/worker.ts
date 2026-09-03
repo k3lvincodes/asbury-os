@@ -1,3 +1,17 @@
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
+import bookings from './routes/bookings';
+import availability from './routes/availability';
+import payments from './routes/payments';
+import webhooks from './routes/webhooks';
+import agreements from './routes/agreements';
+import charges from './routes/charges';
+import notifications from './routes/notifications';
+import customers from './routes/customers';
+import admin from './routes/admin';
+import settings from './routes/settings';
+
 export interface Env {
   BOOKING_HOLDS: KVNamespace;
   SUPABASE_URL: string;
@@ -16,62 +30,38 @@ export interface Env {
   ENVIRONMENT: string;
 }
 
+const app = new Hono<{ Bindings: Env }>();
+
+// Middleware
+app.use('*', cors());
+app.use('*', logger());
+
+// Public routes
+app.route('/api/v1', bookings);
+app.route('/api/v1', availability);
+app.route('/api/v1', payments);
+app.route('/api/v1', agreements);
+
+// Webhook routes (no auth)
+app.route('/api/v1/webhooks', webhooks);
+
+// Protected routes (require auth)
+// app.use('/api/v1/admin/*', requireAuth);
+app.route('/api/v1/admin', admin);
+app.route('/api/v1/admin', charges);
+app.route('/api/v1/admin', notifications);
+app.route('/api/v1/admin', customers);
+app.route('/api/v1/admin', settings);
+
+// Health check
+app.get('/', (c) => {
+  return c.json({ message: 'Asbury Outdoor Services API' });
+});
+
+app.get('/health', (c) => {
+  return c.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    
-    // CORS headers
-    const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    };
-
-    // Handle CORS preflight
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers });
-    }
-
-    // API routes
-    if (url.pathname.startsWith('/api/')) {
-      return handleApiRequest(request, env, headers);
-    }
-
-    return new Response('Asbury Outdoor Services API', { headers });
-  },
+  fetch: app.fetch,
 };
-
-async function handleApiRequest(
-  request: Request,
-  env: Env,
-  headers: Record<string, string>
-): Promise<Response> {
-  const url = new URL(request.url);
-  
-  try {
-    // Simple routing
-    if (url.pathname === '/api/v1/packages') {
-      return new Response(
-        JSON.stringify({ packages: [] }),
-        { headers: { ...headers, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (url.pathname === '/api/v1/availability/check') {
-      return new Response(
-        JSON.stringify({ available: true }),
-        { headers: { ...headers, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    return new Response(
-      JSON.stringify({ error: 'Not found' }),
-      { status: 404, headers: { ...headers, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
-    );
-  }
-}
