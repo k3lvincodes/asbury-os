@@ -1,0 +1,18 @@
+{
+  "rules": [
+    {
+      "id": "no-wrangler-deploy",
+      "description": "Do not use wrangler deploy command from this directory",
+      "command": "wrangler deploy",
+      "action": "deny",
+      "message": "wrangler deploy should not be run from the project root. Deploy from the backend/ directory instead."
+    },
+    {
+      "id": "commit-each-step",
+      "description": "For every step completed in the implementation plan, commit changes to GitHub",
+      "action": "require",
+      "trigger": "step_completion",
+      "message": "After completing each implementation step, commit all changes to GitHub before proceeding to the next step."
+    }
+  ]
+}
