@@ -139,17 +139,17 @@ export default function HomePage() {
         onClose={handleModalClose}
         title="Select Custom Dates"
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="rounded-lg border border-gray-200 p-4">
+              <label className="block text-sm font-semibold text-navy mb-3">Start Date</label>
               <DatePicker
                 selected={modalStartDate ?? undefined}
                 onSelect={handleModalStartDateSelect}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+            <div className="rounded-lg border border-gray-200 p-4">
+              <label className="block text-sm font-semibold text-navy mb-3">End Date</label>
               <DatePicker
                 selected={modalEndDate ?? undefined}
                 onSelect={handleModalEndDateSelect}
@@ -160,31 +160,33 @@ export default function HomePage() {
           </div>
 
           {modalStartDate && modalEndDate && (
-            <div className="rounded-lg bg-gray-50 p-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Duration</span>
-                <span className="font-medium">{modalDays} day{modalDays !== 1 ? 's' : ''}</span>
-              </div>
-              <div className="flex justify-between text-sm mt-1">
-                <span className="text-gray-600">Price</span>
-                <span className="font-medium">
-                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(modalPriceCents / 100)}
-                </span>
+            <div className="rounded-lg bg-forest-light border border-forest/20 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Duration</p>
+                  <p className="text-lg font-bold text-navy">{modalDays} day{modalDays !== 1 ? 's' : ''}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">Total Price</p>
+                  <p className="text-lg font-bold text-forest">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(modalPriceCents / 100)}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={handleModalClose}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 font-medium hover:bg-gray-50"
+              className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-gray-700 font-medium hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleModalConfirm}
               disabled={!modalStartDate || !modalEndDate}
-              className="rounded-md bg-forest px-4 py-2 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
+              className="rounded-md bg-forest px-5 py-2.5 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
             >
               Confirm Dates
             </button>

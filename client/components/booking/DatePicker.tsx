@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { DayPicker } from 'react-day-picker';
-import 'react-day-picker/style.css';
+import 'react-day-picker/dist/style.css';
 import { cn } from '@/lib/utils';
 
 interface DatePickerProps {
@@ -21,7 +21,7 @@ export default function DatePicker({
   const [month, setMonth] = useState<Date>(selected || new Date());
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-lg bg-white">
       <DayPicker
         mode="single"
         selected={selected}
@@ -42,9 +42,9 @@ export default function DatePicker({
           },
         }}
         styles={{
-          caption: { color: '#1a1a2e' },
-          head_cell: { color: '#666666' },
-          day: { fontSize: '14px' },
+          caption: { color: '#1a1a2e', fontSize: '14px', fontWeight: 600 },
+          head_cell: { color: '#6b7280', fontSize: '12px', fontWeight: 500 },
+          day: { fontSize: '14px', margin: '2px' },
         }}
       />
     </div>
