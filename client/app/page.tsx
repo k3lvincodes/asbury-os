@@ -5,14 +5,18 @@ import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import StepIndicator from '@/components/booking/StepIndicator';
 import PackageCard from '@/components/booking/PackageCard';
+import DatePicker from '@/components/booking/DatePicker';
+import Modal from '@/components/Modal';
 import { BOOKING_STEPS, PACKAGES } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatDate, getDaysBetween } from '@/lib/utils';
 
 export default function HomePage() {
   const router = useRouter();
-  const { selectedPackage, setSelectedPackage, setCustomDays } = useBookingStore();
-  const [customDaysInput, setCustomDaysInput] = useState<number>(1);
+  const { selectedPackage, setSelectedPackage, setCustomDays, setStartDate, setEndDate } = useBookingStore();
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [modalStartDate, setModalStartDate] = useState<Date | null>(null);
+  const [modalEndDate, setModalEndDate] = useState<Date | null>(null);
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
@@ -20,14 +24,43 @@ export default function HomePage() {
     }))
   );
 
+  const handleCustomCardClick = () => {
+    setIsCustomModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsCustomModalOpen(false);
+    setModalStartDate(null);
+    setModalEndDate(null);
+  };
+
+  const handleModalStartDateSelect = (date: Date | undefined) => {
+    setModalStartDate(date ?? null);
+    setModalEndDate(null);
+  };
+
+  const handleModalEndDateSelect = (date: Date | undefined) => {
+    setModalEndDate(date ?? null);
+  };
+
+  const handleModalConfirm = () => {
+    if (modalStartDate && modalEndDate) {
+      const days = getDaysBetween(modalStartDate, modalEndDate);
+      setCustomDays(days);
+      setStartDate(modalStartDate);
+      setEndDate(modalEndDate);
+      setSelectedPackage('custom');
+      setIsCustomModalOpen(false);
+      router.push('/dates');
+    }
+  };
+
   // Custom pricing: $225 base + $75 per extra day
-  const customPriceCents = customDaysInput > 0 ? 22500 + (customDaysInput - 1) * 7500 : 0;
+  const modalDays = modalStartDate && modalEndDate ? getDaysBetween(modalStartDate, modalEndDate) : 0;
+  const modalPriceCents = modalDays > 0 ? 22500 + (modalDays - 1) * 7500 : 0;
 
   const handleContinue = () => {
     if (selectedPackage) {
-      if (selectedPackage === 'custom') {
-        setCustomDays(customDaysInput);
-      }
       router.push('/dates');
     }
   };
@@ -63,7 +96,7 @@ export default function HomePage() {
               ? 'border-forest bg-forest-light'
               : 'border-gray-200 hover:border-gray-300'
           )}
-          onClick={() => setSelectedPackage('custom')}
+          onClick={handleCustomCardClick}
         >
           {selectedPackage === 'custom' && (
             <div className="absolute top-2 right-2">
@@ -84,28 +117,8 @@ export default function HomePage() {
           )}
           <h3 className="text-xl font-semibold text-navy">Custom</h3>
           <p className="mt-2 text-sm text-gray-600">Choose your own rental duration</p>
-
-          {selectedPackage === 'custom' && (
-            <div className="mt-4 space-y-3" onClick={(e) => e.stopPropagation()}>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Number of Days</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={customDaysInput}
-                  onChange={(e) => setCustomDaysInput(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
-                />
-              </div>
-            </div>
-          )}
-
           <div className="mt-4">
-            <span className="text-3xl font-bold text-navy">
-              {formatCurrency(customPriceCents)}
-            </span>
-            <span className="text-sm text-gray-500"> / {customDaysInput} day{customDaysInput !== 1 ? 's' : ''}</span>
+            <span className="text-lg font-semibold text-navy">Select Dates</span>
           </div>
         </div>
       </div>
@@ -119,6 +132,65 @@ export default function HomePage() {
           Continue
         </button>
       </div>
+
+      {/* Custom Date Selection Modal */}
+      <Modal
+        isOpen={isCustomModalOpen}
+        onClose={handleModalClose}
+        title="Select Custom Dates"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <DatePicker
+                selected={modalStartDate ?? undefined}
+                onSelect={handleModalStartDateSelect}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <DatePicker
+                selected={modalEndDate ?? undefined}
+                onSelect={handleModalEndDateSelect}
+                minDate={modalStartDate ? new Date(modalStartDate.getTime() + 24 * 60 * 60 * 1000) : undefined}
+                disabledDates={modalStartDate ? [modalStartDate] : []}
+              />
+            </div>
+          </div>
+
+          {modalStartDate && modalEndDate && (
+            <div className="rounded-lg bg-gray-50 p-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Duration</span>
+                <span className="font-medium">{modalDays} day{modalDays !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-gray-600">Price</span>
+                <span className="font-medium">
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(modalPriceCents / 100)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={handleModalClose}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 font-medium hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleModalConfirm}
+              disabled={!modalStartDate || !modalEndDate}
+              className="rounded-md bg-forest px-4 py-2 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
+            >
+              Confirm Dates
+            </button>
+          </div>
+        </div>
+      </Modal>
     </Container>
   );
 }
