@@ -28,8 +28,8 @@ interface BookingResult {
 
 const PACKAGE_PRICES: Record<string, { name: string; durationHours: number; priceCents: number }> = {
   '24h': { name: '24 Hours', durationHours: 24, priceCents: 22500 },
-  '3d': { name: '3 Days', durationHours: 72, priceCents: 40000 },
-  '7d': { name: '7 Days', durationHours: 168, priceCents: 60000 },
+  '3d': { name: '3 Days', durationHours: 72, priceCents: 37500 },
+  '7d': { name: '7 Days', durationHours: 168, priceCents: 67500 },
 };
 
 export async function createBooking(data: BookingData): Promise<BookingResult> {

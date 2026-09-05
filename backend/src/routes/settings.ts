@@ -10,8 +10,8 @@ settings.get('/', async (c) => {
     success: true,
     data: {
       package24hPrice: 22500,
-      package3dPrice: 40000,
-      package7dPrice: 60000,
+      package3dPrice: 37500,
+      package7dPrice: 67500,
       extraDayPrice: 7500,
       extraMilePrice: 300,
       overweightPerTon: 12500,

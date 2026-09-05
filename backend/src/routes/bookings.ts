@@ -21,7 +21,7 @@ bookings.get('/packages', async (c) => {
       name: '3 Days',
       slug: '3d',
       durationHours: 72,
-      basePriceCents: 40000,
+      basePriceCents: 37500,
       description: 'Great for medium-sized jobs',
     },
     {
@@ -29,7 +29,7 @@ bookings.get('/packages', async (c) => {
       name: '7 Days',
       slug: '7d',
       durationHours: 168,
-      basePriceCents: 60000,
+      basePriceCents: 67500,
       description: 'Best for large projects',
     },
   ];
@@ -92,8 +92,8 @@ bookings.post('/bookings', async (c) => {
       holdExpiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
       rentalEndDate: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
       pickupDate: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
-      basePriceCents: 40000,
-      totalDueCents: 40000,
+      basePriceCents: 37500,
+      totalDueCents: 37500,
       package: {
         name: '3 Days',
         durationHours: 72,

@@ -14,7 +14,7 @@ const mockReservations = [
     packageName: '3 Days',
     startDate: '2026-09-10',
     endDate: '2026-09-13',
-    amountDue: 40000,
+    amountDue: 37500,
     bookingStatus: 'confirmed',
     paymentStatus: 'paid',
   },

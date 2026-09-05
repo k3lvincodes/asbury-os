@@ -43,7 +43,7 @@ CREATE TABLE rental_packages (
     name            VARCHAR(100) NOT NULL,          -- '24 Hours', '3 Days', '7 Days'
     slug            VARCHAR(50) UNIQUE NOT NULL,     -- '24h', '3d', '7d'
     duration_hours  INT NOT NULL,                    -- 24, 72, 168
-    base_price_cents INT NOT NULL,                   -- 22500, 40000, 60000
+    base_price_cents INT NOT NULL,                   -- 22500, 37500, 67500
     is_active       BOOLEAN DEFAULT TRUE,
     sort_order      INT DEFAULT 0,
     created_at      TIMESTAMP DEFAULT NOW(),
@@ -246,8 +246,8 @@ CREATE TABLE settings (
 
 -- Default settings rows:
 -- package_24h_price: 22500
--- package_3d_price: 40000
--- package_7d_price: 60000
+-- package_3d_price: 37500
+-- package_7d_price: 67500
 -- extra_day_price: 7500
 -- extra_mile_price: 300
 -- overweight_per_ton: 12500

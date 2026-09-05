@@ -6,8 +6,8 @@
 INSERT INTO rental_packages (name, slug, duration_hours, base_price_cents, sort_order)
 VALUES
   ('24 Hours', '24h', 24, 22500, 1),
-  ('3 Days', '3d', 72, 40000, 2),
-  ('7 Days', '7d', 168, 60000, 3);
+  ('3 Days', '3d', 72, 37500, 2),
+  ('7 Days', '7d', 168, 67500, 3);
 
 -- Insert default trailer
 INSERT INTO trailers (name, description, is_active)
@@ -18,8 +18,8 @@ VALUES
 INSERT INTO settings (key, value)
 VALUES
   ('package_24h_price', '22500'),
-  ('package_3d_price', '40000'),
-  ('package_7d_price', '60000'),
+  ('package_3d_price', '37500'),
+  ('package_7d_price', '67500'),
   ('extra_day_price', '7500'),
   ('extra_mile_price', '300'),
   ('overweight_per_ton', '12500'),

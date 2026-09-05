@@ -13,7 +13,7 @@ const mockBookings = [
     customerName: 'John Smith',
     packageName: '3 Days',
     startDate: '2026-09-10',
-    amountDue: 40000,
+    amountDue: 37500,
     status: 'confirmed',
   },
   {

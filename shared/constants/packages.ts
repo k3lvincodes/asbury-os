@@ -9,13 +9,13 @@ export const PACKAGES = {
     name: '3 Days',
     slug: '3d',
     durationHours: 72,
-    basePriceCents: 40000,
+    basePriceCents: 37500,
   },
   '7d': {
     name: '7 Days',
     slug: '7d',
     durationHours: 168,
-    basePriceCents: 60000,
+    basePriceCents: 67500,
   },
 } as const;
 
