@@ -5,18 +5,18 @@ import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import StepIndicator from '@/components/booking/StepIndicator';
 import PackageCard from '@/components/booking/PackageCard';
-import DatePicker from '@/components/booking/DatePicker';
+import type { DateRange } from 'react-day-picker';
+import DateRangePicker from '@/components/booking/DateRangePicker';
 import Modal from '@/components/Modal';
 import { BOOKING_STEPS, PACKAGES } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
-import { cn, formatDate, getDaysBetween } from '@/lib/utils';
+import { cn, getDaysBetween } from '@/lib/utils';
 
 export default function HomePage() {
   const router = useRouter();
   const { selectedPackage, setSelectedPackage, setCustomDays, setStartDate, setEndDate } = useBookingStore();
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
-  const [modalStartDate, setModalStartDate] = useState<Date | null>(null);
-  const [modalEndDate, setModalEndDate] = useState<Date | null>(null);
+  const [modalRange, setModalRange] = useState<DateRange | undefined>(undefined);
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
@@ -30,25 +30,19 @@ export default function HomePage() {
 
   const handleModalClose = () => {
     setIsCustomModalOpen(false);
-    setModalStartDate(null);
-    setModalEndDate(null);
+    setModalRange(undefined);
   };
 
-  const handleModalStartDateSelect = (date: Date | undefined) => {
-    setModalStartDate(date ?? null);
-    setModalEndDate(null);
-  };
-
-  const handleModalEndDateSelect = (date: Date | undefined) => {
-    setModalEndDate(date ?? null);
+  const handleModalRangeSelect = (range: DateRange | undefined) => {
+    setModalRange(range);
   };
 
   const handleModalConfirm = () => {
-    if (modalStartDate && modalEndDate) {
-      const days = getDaysBetween(modalStartDate, modalEndDate);
+    if (modalRange?.from && modalRange.to) {
+      const days = getDaysBetween(modalRange.from, modalRange.to);
       setCustomDays(days);
-      setStartDate(modalStartDate);
-      setEndDate(modalEndDate);
+      setStartDate(modalRange.from);
+      setEndDate(modalRange.to);
       setSelectedPackage('custom');
       setIsCustomModalOpen(false);
       router.push('/dates');
@@ -56,7 +50,7 @@ export default function HomePage() {
   };
 
   // Custom pricing: $225 base + $75 per extra day
-  const modalDays = modalStartDate && modalEndDate ? getDaysBetween(modalStartDate, modalEndDate) : 0;
+  const modalDays = modalRange?.from && modalRange.to ? getDaysBetween(modalRange.from, modalRange.to) : 0;
   const modalPriceCents = modalDays > 0 ? 22500 + (modalDays - 1) * 7500 : 0;
 
   const handleContinue = () => {
@@ -138,59 +132,40 @@ export default function HomePage() {
         isOpen={isCustomModalOpen}
         onClose={handleModalClose}
         title="Select Custom Dates"
+        className="max-w-md"
       >
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-lg border border-gray-200 p-4">
-              <label className="block text-sm font-semibold text-navy mb-3">Start Date</label>
-              <DatePicker
-                selected={modalStartDate ?? undefined}
-                onSelect={handleModalStartDateSelect}
-              />
-            </div>
-            <div className="rounded-lg border border-gray-200 p-4">
-              <label className="block text-sm font-semibold text-navy mb-3">End Date</label>
-              <DatePicker
-                selected={modalEndDate ?? undefined}
-                onSelect={handleModalEndDateSelect}
-                minDate={modalStartDate ? new Date(modalStartDate.getTime() + 24 * 60 * 60 * 1000) : undefined}
-                disabledDates={modalStartDate ? [modalStartDate] : []}
-              />
-            </div>
-          </div>
+        <p className="mb-4 text-sm text-gray-600">
+          Select your start date, then your end date. The total days determine your price.
+        </p>
 
-          {modalStartDate && modalEndDate && (
-            <div className="rounded-lg bg-forest-light border border-forest/20 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Duration</p>
-                  <p className="text-lg font-bold text-navy">{modalDays} day{modalDays !== 1 ? 's' : ''}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Total Price</p>
-                  <p className="text-lg font-bold text-forest">
-                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(modalPriceCents / 100)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+        <DateRangePicker
+          selected={modalRange}
+          onSelect={handleModalRangeSelect}
+        />
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              onClick={handleModalClose}
-              className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-gray-700 font-medium hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleModalConfirm}
-              disabled={!modalStartDate || !modalEndDate}
-              className="rounded-md bg-forest px-5 py-2.5 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
-            >
-              Confirm Dates
-            </button>
+        {modalRange?.from && modalRange.to && (
+          <div className="mt-4 flex items-center justify-between rounded-lg bg-forest-light border border-forest/20 px-4 py-3">
+            <span className="text-sm text-gray-600">Total ({modalDays} day{modalDays !== 1 ? 's' : ''})</span>
+            <span className="text-lg font-bold text-forest">
+              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(modalPriceCents / 100)}
+            </span>
           </div>
+        )}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={handleModalClose}
+            className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-gray-700 font-medium hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleModalConfirm}
+            disabled={!modalRange?.from || !modalRange.to}
+            className="rounded-md bg-forest px-5 py-2.5 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
+          >
+            Confirm Dates
+          </button>
         </div>
       </Modal>
     </Container>
