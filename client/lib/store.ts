@@ -4,6 +4,8 @@ interface BookingState {
   // Package selection
   selectedPackage: string | null;
   setSelectedPackage: (pkg: string | null) => void;
+  customDays: number | null;
+  setCustomDays: (days: number | null) => void;
 
   // Date selection
   startDate: Date | null;
@@ -36,6 +38,8 @@ export const useBookingStore = create<BookingState>((set) => ({
   // Package selection
   selectedPackage: null,
   setSelectedPackage: (pkg) => set({ selectedPackage: pkg }),
+  customDays: null,
+  setCustomDays: (days) => set({ customDays: days }),
 
   // Date selection
   startDate: null,
@@ -59,6 +63,7 @@ export const useBookingStore = create<BookingState>((set) => ({
   reset: () =>
     set({
       selectedPackage: null,
+      customDays: null,
       startDate: null,
       endDate: null,
       customerInfo: null,
