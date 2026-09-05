@@ -42,7 +42,7 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
     >
       <div
         className={cn(
-          'relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl',
+          'relative w-full max-w-4xl rounded-lg bg-white p-6 shadow-xl',
           className
         )}
       >

@@ -42,9 +42,9 @@ export default function DatePicker({
           },
         }}
         styles={{
-          caption: { color: '#1a1a2e', fontSize: '14px', fontWeight: 600 },
-          head_cell: { color: '#6b7280', fontSize: '12px', fontWeight: 500 },
-          day: { fontSize: '14px', margin: '2px' },
+          caption: { color: '#1a1a2e', fontSize: '13px', fontWeight: 600 },
+          head_cell: { color: '#6b7280', fontSize: '11px', fontWeight: 500 },
+          day: { fontSize: '12px', margin: '1px' },
         }}
       />
     </div>
