@@ -40,7 +40,7 @@ app.use('*', logger());
 // Public routes
 app.route('/api/v1', bookings);
 app.route('/api/v1', availability);
-app.route('/api/v1', payments);
+app.route('/api/v1/payments', payments);
 app.route('/api/v1', agreements);
 
 // Webhook routes (no auth)
