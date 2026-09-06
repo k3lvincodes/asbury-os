@@ -262,37 +262,100 @@ CREATE TABLE settings (
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================
 
--- Enable RLS on all tables
+-- Enable RLS on all tables so no data is publicly accessible.
+-- (Service role and table owners bypass RLS entirely.)
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE trailers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rental_packages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reservations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agreements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE signed_agreements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE additional_charges ENABLE ROW LEVEL SECURITY;
-ALTER TABLE signed_agreements ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE booking_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
--- Admin policies (service role bypasses RLS)
-CREATE POLICY "Admins can view all reservations"
-  ON reservations FOR SELECT
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.id = auth.uid()
-      AND admin_users.is_active = true
-    )
+-- Helper: true when the current user is an active admin.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM admin_users
+    WHERE id = auth.uid() AND is_active = true
   );
+$$;
 
-CREATE POLICY "Admins can update reservations"
-  ON reservations FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.id = auth.uid()
-      AND admin_users.is_active = true
-    )
-  );
+-- Admin-only policies for every table.
+-- Authenticated admins get full access; everyone else is denied.
+-- A repeated run is safe thanks to the DROP POLICY IF EXISTS guards.
+
+DROP POLICY IF EXISTS "Admin full access customers" ON customers;
+CREATE POLICY "Admin full access customers"
+  ON customers FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access trailers" ON trailers;
+CREATE POLICY "Admin full access trailers"
+  ON trailers FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access rental_packages" ON rental_packages;
+CREATE POLICY "Admin full access rental_packages"
+  ON rental_packages FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can view all reservations" ON reservations;
+DROP POLICY IF EXISTS "Admins can update reservations" ON reservations;
+DROP POLICY IF EXISTS "Admin full access reservations" ON reservations;
+CREATE POLICY "Admin full access reservations"
+  ON reservations FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access agreements" ON agreements;
+CREATE POLICY "Admin full access agreements"
+  ON agreements FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access signed_agreements" ON signed_agreements;
+CREATE POLICY "Admin full access signed_agreements"
+  ON signed_agreements FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access payments" ON payments;
+CREATE POLICY "Admin full access payments"
+  ON payments FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access additional_charges" ON additional_charges;
+CREATE POLICY "Admin full access additional_charges"
+  ON additional_charges FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access booking_history" ON booking_history;
+CREATE POLICY "Admin full access booking_history"
+  ON booking_history FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access notifications" ON notifications;
+CREATE POLICY "Admin full access notifications"
+  ON notifications FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access admin_users" ON admin_users;
+CREATE POLICY "Admin full access admin_users"
+  ON admin_users FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin full access settings" ON settings;
+CREATE POLICY "Admin full access settings"
+  ON settings FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Customer policies (via secure token, not auth)
 -- Customers access reservations through API with booking_number + agreement_token
