@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 -- ============================================
 -- CUSTOMERS
 -- ============================================
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name       VARCHAR(255) NOT NULL,
     email           VARCHAR(255) NOT NULL,
@@ -21,13 +21,13 @@ CREATE TABLE customers (
     updated_at      TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_customers_email ON customers(email);
-CREATE INDEX idx_customers_phone ON customers(phone);
+CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
 
 -- ============================================
 -- TRAILERS
 -- ============================================
-CREATE TABLE trailers (
+CREATE TABLE IF NOT EXISTS trailers (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name            VARCHAR(255) NOT NULL,
     description     TEXT,
@@ -38,7 +38,7 @@ CREATE TABLE trailers (
 -- ============================================
 -- RENTAL PACKAGES
 -- ============================================
-CREATE TABLE rental_packages (
+CREATE TABLE IF NOT EXISTS rental_packages (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name            VARCHAR(100) NOT NULL,          -- '24 Hours', '3 Days', '7 Days'
     slug            VARCHAR(50) UNIQUE NOT NULL,     -- '24h', '3d', '7d'
@@ -53,7 +53,7 @@ CREATE TABLE rental_packages (
 -- ============================================
 -- RESERVATIONS (Central object)
 -- ============================================
-CREATE TABLE reservations (
+CREATE TABLE IF NOT EXISTS reservations (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     booking_number      VARCHAR(20) UNIQUE NOT NULL,   -- 'AOS-2026-XXXX'
     invoice_number      VARCHAR(20) UNIQUE,             -- 'INV-2026-XXXX'
@@ -104,16 +104,16 @@ CREATE TABLE reservations (
     updated_at          TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_reservations_booking_number ON reservations(booking_number);
-CREATE INDEX idx_reservations_customer ON reservations(customer_id);
-CREATE INDEX idx_reservations_dates ON reservations(rental_start_date, rental_end_date);
-CREATE INDEX idx_reservations_status ON reservations(booking_status);
-CREATE INDEX idx_reservations_trailer_dates ON reservations(trailer_id, rental_start_date, rental_end_date);
+CREATE INDEX IF NOT EXISTS idx_reservations_booking_number ON reservations(booking_number);
+CREATE INDEX IF NOT EXISTS idx_reservations_customer ON reservations(customer_id);
+CREATE INDEX IF NOT EXISTS idx_reservations_dates ON reservations(rental_start_date, rental_end_date);
+CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(booking_status);
+CREATE INDEX IF NOT EXISTS idx_reservations_trailer_dates ON reservations(trailer_id, rental_start_date, rental_end_date);
 
 -- ============================================
 -- AGREEMENTS (Versioned)
 -- ============================================
-CREATE TABLE agreements (
+CREATE TABLE IF NOT EXISTS agreements (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     version         VARCHAR(20) NOT NULL,               -- '1.0', '1.1', '2.0'
     title           VARCHAR(255) NOT NULL,
@@ -122,7 +122,7 @@ CREATE TABLE agreements (
     created_at      TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE signed_agreements (
+CREATE TABLE IF NOT EXISTS signed_agreements (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     reservation_id  UUID NOT NULL REFERENCES reservations(id),
     agreement_id    UUID NOT NULL REFERENCES agreements(id),
@@ -135,12 +135,12 @@ CREATE TABLE signed_agreements (
     created_at      TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_signed_agreements_reservation ON signed_agreements(reservation_id);
+CREATE INDEX IF NOT EXISTS idx_signed_agreements_reservation ON signed_agreements(reservation_id);
 
 -- ============================================
 -- ADDITIONAL CHARGES
 -- ============================================
-CREATE TABLE additional_charges (
+CREATE TABLE IF NOT EXISTS additional_charges (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     reservation_id      UUID NOT NULL REFERENCES reservations(id),
     charge_type         VARCHAR(50) NOT NULL,
@@ -158,12 +158,12 @@ CREATE TABLE additional_charges (
     updated_at          TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_charges_reservation ON additional_charges(reservation_id);
+CREATE INDEX IF NOT EXISTS idx_charges_reservation ON additional_charges(reservation_id);
 
 -- ============================================
 -- PAYMENTS
 -- ============================================
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     reservation_id      UUID NOT NULL REFERENCES reservations(id),
     stripe_payment_id   VARCHAR(255),                    -- Stripe PaymentIntent ID
@@ -180,13 +180,13 @@ CREATE TABLE payments (
     updated_at          TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_payments_reservation ON payments(reservation_id);
-CREATE INDEX idx_payments_stripe_id ON payments(stripe_payment_id);
+CREATE INDEX IF NOT EXISTS idx_payments_reservation ON payments(reservation_id);
+CREATE INDEX IF NOT EXISTS idx_payments_stripe_id ON payments(stripe_payment_id);
 
 -- ============================================
 -- BOOKING STATUS HISTORY (Audit Trail)
 -- ============================================
-CREATE TABLE booking_history (
+CREATE TABLE IF NOT EXISTS booking_history (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     reservation_id  UUID NOT NULL REFERENCES reservations(id),
     action          VARCHAR(100) NOT NULL,               -- 'status_changed', 'payment_received', etc.
@@ -197,12 +197,12 @@ CREATE TABLE booking_history (
     created_at      TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_booking_history_reservation ON booking_history(reservation_id);
+CREATE INDEX IF NOT EXISTS idx_booking_history_reservation ON booking_history(reservation_id);
 
 -- ============================================
 -- NOTIFICATIONS LOG
 -- ============================================
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     reservation_id  UUID NOT NULL REFERENCES reservations(id),
     type            VARCHAR(50) NOT NULL,                -- 'email', 'sms'
@@ -217,14 +217,14 @@ CREATE TABLE notifications (
     created_at      TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_notifications_reservation ON notifications(reservation_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_reservation ON notifications(reservation_id);
 
 -- ============================================
 -- ADMIN USERS (Managed via Supabase Auth)
 -- ============================================
 -- Admin users are created in Supabase Auth dashboard
 -- This table stores additional profile data
-CREATE TABLE admin_users (
+CREATE TABLE IF NOT EXISTS admin_users (
     id              UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email           VARCHAR(255) UNIQUE NOT NULL,
     name            VARCHAR(255) NOT NULL,
@@ -237,7 +237,7 @@ CREATE TABLE admin_users (
 -- ============================================
 -- SETTINGS (Key-value for flexible config)
 -- ============================================
-CREATE TABLE settings (
+CREATE TABLE IF NOT EXISTS settings (
     key             VARCHAR(100) PRIMARY KEY,
     value           JSONB NOT NULL,
     updated_by      UUID REFERENCES admin_users(id),
@@ -366,6 +366,7 @@ CREATE POLICY "Admin full access settings"
 -- ============================================
 
 -- Prevent double-booking at DB level with exclusion constraint
+ALTER TABLE reservations DROP CONSTRAINT IF EXISTS no_overlapping_reservations;
 ALTER TABLE reservations ADD CONSTRAINT no_overlapping_reservations
     EXCLUDE USING gist (
         trailer_id WITH =,
