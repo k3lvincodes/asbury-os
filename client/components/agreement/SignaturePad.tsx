@@ -1,17 +1,39 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
-import { cn } from '@/lib/utils';
 
 interface SignaturePadProps {
   onSignature: (dataUrl: string) => void;
   onClear: () => void;
 }
 
+const MIN_HEIGHT = 120;
+const MAX_HEIGHT = 220;
+const ASPECT_RATIO = 2.5;
+
 export default function SignaturePad({ onSignature, onClear }: SignaturePadProps) {
   const canvasRef = useRef<SignatureCanvas>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 500, height: 200 });
   const [isEmpty, setIsEmpty] = useState(true);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const resize = () => {
+      const width = wrapper.clientWidth;
+      if (!width) return;
+      const height = Math.min(Math.max(width / ASPECT_RATIO, MIN_HEIGHT), MAX_HEIGHT);
+      setSize({ width, height });
+    };
+
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(wrapper);
+    return () => ro.disconnect();
+  }, []);
 
   const handleClear = () => {
     canvasRef.current?.clear();
@@ -29,14 +51,18 @@ export default function SignaturePad({ onSignature, onClear }: SignaturePadProps
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-300 bg-white p-2">
+      <div
+        ref={wrapperRef}
+        className="overflow-hidden rounded-lg border border-gray-300 bg-white"
+        style={{ height: size.height }}
+      >
         <SignatureCanvas
           ref={canvasRef}
           penColor="#1a1a2e"
           canvasProps={{
-            width: 500,
-            height: 200,
-            className: 'w-full',
+            width: size.width,
+            height: size.height,
+            className: 'block w-full',
           }}
           onEnd={handleEnd}
         />
