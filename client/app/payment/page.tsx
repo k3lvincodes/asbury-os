@@ -60,6 +60,12 @@ export default function PaymentPage() {
       const res = await apiPost<CheckoutResponse>('/api/v1/payments/create-checkout', {
         amountCents: packageData.basePriceCents,
         customerEmail: customerInfo.email,
+        customerName: customerInfo.fullName,
+        customerPhone: customerInfo.phone,
+        deliveryAddress: customerInfo.deliveryAddress,
+        packageSlug: selectedPackage,
+        rentalStartDate: startDate.toISOString().split('T')[0],
+        rentalEndDate: endDate.toISOString().split('T')[0],
       });
 
       if (res.success && res.data?.url) {

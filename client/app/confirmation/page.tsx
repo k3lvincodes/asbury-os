@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import { useBookingStore } from '@/lib/store';
 
 export default function ConfirmationPage() {
   const router = useRouter();
-  const { bookingNumber, reset } = useBookingStore();
+  const searchParams = useSearchParams();
+  const { bookingNumber: storeBookingNumber, reset } = useBookingStore();
+  const bookingNumber = searchParams.get('booking') || storeBookingNumber;
 
   useEffect(() => {
     return () => {
@@ -44,7 +46,9 @@ export default function ConfirmationPage() {
 
         <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6">
           <p className="text-sm text-gray-600">Your Booking Number</p>
-          <p className="mt-2 text-2xl font-bold text-navy">{bookingNumber}</p>
+          <p className="mt-2 text-2xl font-bold text-navy">
+            {bookingNumber || '—'}
+          </p>
         </div>
 
         <div className="mt-8 space-y-4">
@@ -64,12 +68,14 @@ export default function ConfirmationPage() {
           >
             Return Home
           </button>
-          <button
-            onClick={() => router.push(`/reservation/${bookingNumber}`)}
-            className="rounded-md bg-forest px-6 py-3 text-white font-medium hover:bg-forest-600"
-          >
-            View Reservation
-          </button>
+          {bookingNumber && (
+            <button
+              onClick={() => router.push(`/reservation/${bookingNumber}`)}
+              className="rounded-md bg-forest px-6 py-3 text-white font-medium hover:bg-forest-600"
+            >
+              View Reservation
+            </button>
+          )}
         </div>
       </div>
     </Container>

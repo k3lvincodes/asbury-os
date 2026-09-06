@@ -27,7 +27,7 @@ export async function createCheckoutSession(
       },
     ],
     mode: 'payment',
-    success_url: `${clientUrl}/confirmation`,
+    success_url: `${clientUrl}/confirmation?booking=${data.bookingNumber}`,
     cancel_url: `${clientUrl}/review`,
     customer_email: data.customerEmail,
     client_reference_id: data.reservationId,
