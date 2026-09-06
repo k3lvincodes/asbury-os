@@ -9,8 +9,9 @@ interface CheckoutSessionData {
 
 export async function createCheckoutSession(
   stripe: Stripe,
-  data: CheckoutSessionData
-): Promise<{ sessionId: string; url: string }> {
+  data: CheckoutSessionData,
+  clientUrl: string
+): Promise<{ sessionId: string; url: string; bookingNumber: string }> {
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -26,9 +27,10 @@ export async function createCheckoutSession(
       },
     ],
     mode: 'payment',
-    success_url: `${process.env.CLIENT_URL}/book/confirmation/${data.bookingNumber}`,
-    cancel_url: `${process.env.CLIENT_URL}/book/review`,
+    success_url: `${clientUrl}/confirmation`,
+    cancel_url: `${clientUrl}/review`,
     customer_email: data.customerEmail,
+    client_reference_id: data.reservationId,
     metadata: {
       reservationId: data.reservationId,
       bookingNumber: data.bookingNumber,
@@ -38,6 +40,7 @@ export async function createCheckoutSession(
   return {
     sessionId: session.id,
     url: session.url!,
+    bookingNumber: data.bookingNumber,
   };
 }
 

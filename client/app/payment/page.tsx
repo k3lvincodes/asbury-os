@@ -4,13 +4,23 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import StepIndicator from '@/components/booking/StepIndicator';
-import CheckoutForm from '@/components/payment/CheckoutForm';
+import BookingSummary from '@/components/booking/BookingSummary';
 import { BOOKING_STEPS, PACKAGES } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
+import { apiPost } from '@/lib/api';
+import { formatCurrency } from '@/lib/utils';
+
+interface CheckoutResponse {
+  sessionId: string;
+  url: string;
+  bookingNumber: string;
+}
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { selectedPackage, customDays } = useBookingStore();
+  const { selectedPackage, customDays, startDate, endDate, customerInfo, setBookingNumber } = useBookingStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
@@ -27,7 +37,7 @@ export default function PaymentPage() {
       }
     : PACKAGES.find((p) => p.slug === selectedPackage);
 
-  if (!packageData) {
+  if (!packageData || !startDate || !endDate || !customerInfo) {
     return (
       <Container className="py-12">
         <h1 className="text-3xl font-bold text-navy">Payment</h1>
@@ -42,24 +52,75 @@ export default function PaymentPage() {
     );
   }
 
-  const handlePaymentSuccess = () => {
-    router.push('/confirmation');
+  const handlePay = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await apiPost<CheckoutResponse>('/api/v1/payments/create-checkout', {
+        amountCents: packageData.basePriceCents,
+        customerEmail: customerInfo.email,
+      });
+
+      if (res.success && res.data?.url) {
+        setBookingNumber(res.data.bookingNumber);
+        window.location.href = res.data.url;
+      } else {
+        setError('Unable to start checkout. Please try again.');
+        setIsLoading(false);
+      }
+    } catch {
+      setError('Unable to reach the payment service. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   return (
     <Container className="py-12">
       <h1 className="text-3xl font-bold text-navy">Payment</h1>
-      <p className="mt-2 text-gray-600">Complete your payment to confirm your booking.</p>
-      
+      <p className="mt-2 text-gray-600">Review your booking details and proceed to secure checkout.</p>
+
       <div className="mt-8">
         <StepIndicator steps={steps} />
       </div>
 
-      <div className="mt-8 max-w-md">
-        <CheckoutForm
-          amount={packageData.basePriceCents}
-          onSubmit={handlePaymentSuccess}
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <BookingSummary
+          packageName={packageData.name}
+          startDate={startDate}
+          endDate={endDate}
+          basePriceCents={packageData.basePriceCents}
+          amountDueCents={packageData.basePriceCents}
+          deliveryAddress={customerInfo.deliveryAddress}
         />
+
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <h3 className="text-lg font-semibold text-navy">Payment Details</h3>
+
+          <div className="mt-4">
+            <div className="flex justify-between border-b border-gray-200 py-2">
+              <span className="text-gray-600">Total Amount</span>
+              <span className="font-semibold">{formatCurrency(packageData.basePriceCents)}</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handlePay}
+            disabled={isLoading}
+            className="mt-6 w-full rounded-md bg-forest px-4 py-3 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
+          >
+            {isLoading ? 'Redirecting to Stripe...' : `Pay ${formatCurrency(packageData.basePriceCents)}`}
+          </button>
+
+          {error && (
+            <p className="mt-4 text-center text-sm text-red-600">{error}</p>
+          )}
+
+          <p className="mt-4 text-center text-sm text-gray-500">
+            Secure payment powered by Stripe
+          </p>
+        </div>
       </div>
 
       <div className="mt-8 flex justify-between">
