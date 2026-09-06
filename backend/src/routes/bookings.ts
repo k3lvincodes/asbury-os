@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { Env } from '../worker';
+import { createSupabaseServiceClient } from '../config/supabase';
 
 const bookings = new Hono<{ Bindings: Env }>();
 
@@ -106,16 +107,44 @@ bookings.post('/bookings', async (c) => {
 bookings.get('/bookings/:bookingNumber', async (c) => {
   const bookingNumber = c.req.param('bookingNumber');
   
-  // In production, fetch from Supabase
+  const supabase = createSupabaseServiceClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY);
+
+  const { data, error } = await supabase
+    .from('reservations')
+    .select(`
+      *,
+      customer:customers(full_name, email, phone, delivery_address),
+      package:rental_packages(name, duration_hours, base_price_cents)
+    `)
+    .eq('booking_number', bookingNumber)
+    .single();
+
+  if (error || !data) {
+    return c.json({ success: false, error: 'Reservation not found' }, 404);
+  }
+
   return c.json({
     success: true,
     data: {
-      bookingNumber,
-      status: 'confirmed',
+      bookingNumber: data.booking_number,
+      status: data.booking_status,
+      paymentStatus: data.payment_status,
       customer: {
-        name: 'John Smith',
-        email: 'john@example.com',
+        name: data.customer?.full_name ?? '',
+        email: data.customer?.email ?? '',
+        phone: data.customer?.phone ?? '',
+        deliveryAddress: data.customer?.delivery_address ?? data.delivery_address,
       },
+      package: data.package ? {
+        name: data.package.name,
+        durationHours: data.package.duration_hours,
+      } : null,
+      rentalStartDate: data.rental_start_date,
+      rentalEndDate: data.rental_end_date,
+      basePriceCents: data.base_price_cents,
+      deliveryAddress: data.delivery_address,
+      agreementStatus: data.agreement_status,
+      createdAt: data.created_at,
     },
   });
 });
