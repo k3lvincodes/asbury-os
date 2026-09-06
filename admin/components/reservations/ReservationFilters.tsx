@@ -32,29 +32,17 @@ export default function ReservationFilters({ onFilterChange }: ReservationFilter
     <div className="rounded-lg border border-gray-200 bg-white p-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700">
-            Search
-          </label>
-          <input
-            type="text"
-            id="search"
-            value={filters.search}
+          <label htmlFor="search" className="block text-sm font-medium text-gray-700">Search</label>
+          <input type="text" id="search" value={filters.search}
             onChange={(e) => handleChange('search', e.target.value)}
             placeholder="Booking #, customer name..."
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-          />
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest" />
         </div>
-
         <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-            Booking Status
-          </label>
-          <select
-            id="status"
-            value={filters.status}
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700">Booking Status</label>
+          <select id="status" value={filters.status}
             onChange={(e) => handleChange('status', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-          >
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest">
             <option value="all">All Statuses</option>
             <option value="pending">Pending</option>
             <option value="awaiting_payment">Awaiting Payment</option>
@@ -65,17 +53,11 @@ export default function ReservationFilters({ onFilterChange }: ReservationFilter
             <option value="expired">Expired</option>
           </select>
         </div>
-
         <div>
-          <label htmlFor="paymentStatus" className="block text-sm font-medium text-gray-700">
-            Payment Status
-          </label>
-          <select
-            id="paymentStatus"
-            value={filters.paymentStatus}
+          <label htmlFor="paymentStatus" className="block text-sm font-medium text-gray-700">Payment Status</label>
+          <select id="paymentStatus" value={filters.paymentStatus}
             onChange={(e) => handleChange('paymentStatus', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-          >
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest">
             <option value="all">All Payment Statuses</option>
             <option value="pending">Pending</option>
             <option value="paid">Paid</option>
@@ -83,17 +65,11 @@ export default function ReservationFilters({ onFilterChange }: ReservationFilter
             <option value="refunded">Refunded</option>
           </select>
         </div>
-
         <div>
-          <label htmlFor="dateRange" className="block text-sm font-medium text-gray-700">
-            Date Range
-          </label>
-          <select
-            id="dateRange"
-            value={filters.dateRange}
+          <label htmlFor="dateRange" className="block text-sm font-medium text-gray-700">Date Range</label>
+          <select id="dateRange" value={filters.dateRange}
             onChange={(e) => handleChange('dateRange', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-          >
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest">
             <option value="all">All Time</option>
             <option value="today">Today</option>
             <option value="week">This Week</option>

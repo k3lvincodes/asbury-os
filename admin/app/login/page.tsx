@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,7 +16,6 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // Simulate login - in production, this would call the API
     setTimeout(() => {
       if (email === 'admin@asburyoutdoorservices.com' && password === 'password') {
         router.push('/dashboard');
@@ -27,10 +27,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-primary">Admin Login</h1>
+          <Image
+            src="/aos_logo.png"
+            alt="Asbury Outdoor Services"
+            width={140}
+            height={52}
+            className="mx-auto"
+          />
+          <h1 className="mt-4 text-2xl font-bold text-navy">Admin Login</h1>
           <p className="mt-2 text-sm text-gray-600">
             Sign in to access the admin dashboard
           </p>
@@ -55,7 +62,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
             />
           </div>
 
@@ -71,14 +78,14 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-md bg-accent px-4 py-2 text-white font-medium hover:bg-accent-600 disabled:opacity-50"
+            className="w-full rounded-md bg-forest px-4 py-2 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>

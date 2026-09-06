@@ -1,21 +1,21 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import { useBookingStore } from '@/lib/store';
 
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { bookingNumber: storeBookingNumber, reset } = useBookingStore();
   const bookingNumber = searchParams.get('booking') || storeBookingNumber;
 
   useEffect(() => {
-    return () => {
+    if (bookingNumber) {
       reset();
-    };
-  }, [reset]);
+    }
+  }, [bookingNumber, reset]);
 
   return (
     <Container className="py-12">
@@ -79,5 +79,17 @@ export default function ConfirmationPage() {
         </div>
       </div>
     </Container>
+  );
+}
+
+export default function ConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <Container className="py-12">
+        <div className="text-center text-gray-500">Loading...</div>
+      </Container>
+    }>
+      <ConfirmationContent />
+    </Suspense>
   );
 }

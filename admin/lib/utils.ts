@@ -31,16 +31,3 @@ export function formatDateTime(date: Date | string): string {
     minute: '2-digit',
   }).format(d);
 }
-
-export function calculateEndDate(startDate: Date, durationHours: number): Date {
-  const endDate = new Date(startDate);
-  endDate.setHours(endDate.getHours() + durationHours);
-  return endDate;
-}
-
-export function getDaysBetween(start: Date, end: Date): number {
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-export { calculateCustomPrice } from '../../shared/utils/formatting';

@@ -22,3 +22,11 @@ export function formatDateTime(date: Date): string {
     minute: '2-digit',
   }).format(date);
 }
+
+const CUSTOM_BASE_PRICE_CENTS = 22500;
+const CUSTOM_EXTRA_DAY_PRICE_CENTS = 7500;
+
+export function calculateCustomPrice(days: number): number {
+  if (days <= 0) return 0;
+  return CUSTOM_BASE_PRICE_CENTS + (days - 1) * CUSTOM_EXTRA_DAY_PRICE_CENTS;
+}

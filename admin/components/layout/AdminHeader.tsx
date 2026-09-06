@@ -6,12 +6,12 @@ export default function AdminHeader() {
   return (
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
       <div className="flex items-center">
-        <h1 className="text-xl font-semibold text-primary">Asbury Outdoor Services</h1>
+        <h1 className="text-xl font-semibold text-navy">Admin Dashboard</h1>
       </div>
       <div className="flex items-center space-x-4">
         <Link
           href="/"
-          className="text-sm text-gray-600 hover:text-gray-900"
+          className="rounded-md bg-forest-light px-4 py-2 text-sm font-medium text-forest hover:bg-forest-100"
         >
           View Site
         </Link>

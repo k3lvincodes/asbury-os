@@ -29,12 +29,12 @@ const mockBookings = [
 
 export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <div className="flex flex-1 flex-col">
         <AdminHeader />
         <main className="flex-1 p-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-navy">Dashboard</h1>
           
           <div className="mt-6">
             <StatsCards

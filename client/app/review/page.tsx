@@ -7,7 +7,7 @@ import StepIndicator from '@/components/booking/StepIndicator';
 import BookingSummary from '@/components/booking/BookingSummary';
 import { BOOKING_STEPS, PACKAGES } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
-import { getDaysBetween } from '@/lib/utils';
+import { getDaysBetween, calculateCustomPrice } from '@/lib/utils';
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function ReviewPage() {
         name: `Custom (${customDays} days)`,
         slug: 'custom',
         durationHours: customDays ? customDays * 24 : 24,
-        basePriceCents: customDays ? 22500 + (customDays - 1) * 7500 : 22500,
+        basePriceCents: calculateCustomPrice(customDays ?? 0),
       }
     : PACKAGES.find((p) => p.slug === selectedPackage);
 

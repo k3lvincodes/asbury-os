@@ -10,7 +10,7 @@ import DateRangePicker from '@/components/booking/DateRangePicker';
 import Modal from '@/components/Modal';
 import { BOOKING_STEPS, PACKAGES } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
-import { cn, getDaysBetween } from '@/lib/utils';
+import { cn, getDaysBetween, calculateCustomPrice } from '@/lib/utils';
 
 export default function HomePage() {
   const router = useRouter();
@@ -49,9 +49,8 @@ export default function HomePage() {
     }
   };
 
-  // Custom pricing: $225 base + $75 per extra day
   const modalDays = modalRange?.from && modalRange.to ? getDaysBetween(modalRange.from, modalRange.to) : 0;
-  const modalPriceCents = modalDays > 0 ? 22500 + (modalDays - 1) * 7500 : 0;
+  const modalPriceCents = calculateCustomPrice(modalDays);
 
   const handleContinue = () => {
     if (selectedPackage) {

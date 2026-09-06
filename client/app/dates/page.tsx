@@ -7,7 +7,7 @@ import StepIndicator from '@/components/booking/StepIndicator';
 import DatePicker from '@/components/booking/DatePicker';
 import { BOOKING_STEPS } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
-import { formatDate, calculateEndDate, getDaysBetween } from '@/lib/utils';
+import { formatDate, calculateEndDate, getDaysBetween, calculateCustomPrice } from '@/lib/utils';
 
 export default function DatesPage() {
   const router = useRouter();
@@ -52,9 +52,8 @@ export default function DatesPage() {
     }
   };
 
-  // Custom pricing: $225 base + $75 per extra day
   const customPriceCents = startDate && endDate
-    ? 22500 + Math.max(0, getDaysBetween(startDate, endDate) - 1) * 7500
+    ? calculateCustomPrice(getDaysBetween(startDate, endDate))
     : 0;
 
   const packageName = selectedPackage === '24h' ? '24 Hours'

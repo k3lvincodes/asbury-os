@@ -27,20 +27,13 @@ const columns = [
   columnHelper.accessor('bookingNumber', {
     header: 'Booking #',
     cell: (info) => (
-      <Link
-        href={`/reservations/${info.row.original.id}`}
-        className="text-sm font-medium text-accent hover:text-accent-600"
-      >
+      <Link href={`/reservations/${info.row.original.id}`} className="text-sm font-medium text-forest hover:text-forest-600">
         {info.getValue()}
       </Link>
     ),
   }),
-  columnHelper.accessor('customerName', {
-    header: 'Customer',
-  }),
-  columnHelper.accessor('packageName', {
-    header: 'Package',
-  }),
+  columnHelper.accessor('customerName', { header: 'Customer' }),
+  columnHelper.accessor('packageName', { header: 'Package' }),
   columnHelper.accessor('startDate', {
     header: 'Start Date',
     cell: (info) => formatDate(info.getValue()),
@@ -56,15 +49,11 @@ const columns = [
   columnHelper.accessor('bookingStatus', {
     header: 'Status',
     cell: (info) => (
-      <span
-        className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-          info.getValue() === 'confirmed'
-            ? 'bg-green-100 text-green-800'
-            : info.getValue() === 'pending'
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-gray-100 text-gray-800'
-        }`}
-      >
+      <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+        info.getValue() === 'confirmed' ? 'bg-green-100 text-green-800'
+        : info.getValue() === 'pending' ? 'bg-yellow-100 text-yellow-800'
+        : 'bg-gray-100 text-gray-800'
+      }`}>
         {info.getValue()}
       </span>
     ),
@@ -72,15 +61,11 @@ const columns = [
   columnHelper.accessor('paymentStatus', {
     header: 'Payment',
     cell: (info) => (
-      <span
-        className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-          info.getValue() === 'paid'
-            ? 'bg-green-100 text-green-800'
-            : info.getValue() === 'pending'
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-red-100 text-red-800'
-        }`}
-      >
+      <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+        info.getValue() === 'paid' ? 'bg-green-100 text-green-800'
+        : info.getValue() === 'pending' ? 'bg-yellow-100 text-yellow-800'
+        : 'bg-red-100 text-red-800'
+      }`}>
         {info.getValue()}
       </span>
     ),
@@ -106,15 +91,8 @@ export default function ReservationTable({ data }: ReservationTableProps) {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
+                  <th key={header.id} scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
               </tr>
@@ -124,10 +102,7 @@ export default function ReservationTable({ data }: ReservationTableProps) {
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="whitespace-nowrap px-6 py-4 text-sm text-gray-900"
-                  >
+                  <td key={cell.id} className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

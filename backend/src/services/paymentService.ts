@@ -49,22 +49,58 @@ export async function handleWebhook(
   payload: string,
   signature: string,
   webhookSecret: string
-) {
+): Promise<{ reservationId: string; status: string; paymentStatus: string } | { received: true }> {
   const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
 
   switch (event.type) {
-    case 'checkout.session.completed':
-      // Handle successful payment
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const reservationId = session.metadata?.reservationId;
+      if (reservationId) {
+        return {
+          reservationId,
+          status: 'confirmed',
+          paymentStatus: 'paid',
+        };
+      }
       break;
-    case 'payment_intent.payment_failed':
-      // Handle failed payment
+    }
+    case 'payment_intent.payment_failed': {
+      const paymentIntent = event.data.object;
+      const reservationId = paymentIntent.metadata?.reservationId;
+      if (reservationId) {
+        return {
+          reservationId,
+          status: 'payment_failed',
+          paymentStatus: 'failed',
+        };
+      }
       break;
-    case 'charge.refunded':
-      // Handle refund
+    }
+    case 'charge.refunded': {
+      const charge = event.data.object;
+      const reservationId = charge.metadata?.reservationId;
+      if (reservationId) {
+        return {
+          reservationId,
+          status: 'refunded',
+          paymentStatus: 'refunded',
+        };
+      }
       break;
-    case 'checkout.session.expired':
-      // Handle expired session
+    }
+    case 'checkout.session.expired': {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const reservationId = session.metadata?.reservationId;
+      if (reservationId) {
+        return {
+          reservationId,
+          status: 'expired',
+          paymentStatus: 'pending',
+        };
+      }
       break;
+    }
   }
 
   return { received: true };
