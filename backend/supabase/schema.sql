@@ -138,29 +138,6 @@ CREATE TABLE signed_agreements (
 CREATE INDEX idx_signed_agreements_reservation ON signed_agreements(reservation_id);
 
 -- ============================================
--- PAYMENTS
--- ============================================
-CREATE TABLE payments (
-    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    reservation_id      UUID NOT NULL REFERENCES reservations(id),
-    stripe_payment_id   VARCHAR(255),                    -- Stripe PaymentIntent ID
-    stripe_session_id   VARCHAR(255),                    -- Stripe Checkout Session ID
-    amount_cents        INT NOT NULL,
-    currency            VARCHAR(3) DEFAULT 'usd',
-    status              VARCHAR(30) DEFAULT 'pending',
-        -- pending, successful, failed, refunded, partially_refunded
-    payment_type        VARCHAR(30) NOT NULL,
-        -- booking, additional_charge, refund
-    charge_id           UUID REFERENCES additional_charges(id),
-    metadata            JSONB,                           -- Extra payment data
-    created_at          TIMESTAMP DEFAULT NOW(),
-    updated_at          TIMESTAMP DEFAULT NOW()
-);
-
-CREATE INDEX idx_payments_reservation ON payments(reservation_id);
-CREATE INDEX idx_payments_stripe_id ON payments(stripe_payment_id);
-
--- ============================================
 -- ADDITIONAL CHARGES
 -- ============================================
 CREATE TABLE additional_charges (
@@ -182,6 +159,29 @@ CREATE TABLE additional_charges (
 );
 
 CREATE INDEX idx_charges_reservation ON additional_charges(reservation_id);
+
+-- ============================================
+-- PAYMENTS
+-- ============================================
+CREATE TABLE payments (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    reservation_id      UUID NOT NULL REFERENCES reservations(id),
+    stripe_payment_id   VARCHAR(255),                    -- Stripe PaymentIntent ID
+    stripe_session_id   VARCHAR(255),                    -- Stripe Checkout Session ID
+    amount_cents        INT NOT NULL,
+    currency            VARCHAR(3) DEFAULT 'usd',
+    status              VARCHAR(30) DEFAULT 'pending',
+        -- pending, successful, failed, refunded, partially_refunded
+    payment_type        VARCHAR(30) NOT NULL,
+        -- booking, additional_charge, refund
+    charge_id           UUID REFERENCES additional_charges(id),
+    metadata            JSONB,                           -- Extra payment data
+    created_at          TIMESTAMP DEFAULT NOW(),
+    updated_at          TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_payments_reservation ON payments(reservation_id);
+CREATE INDEX idx_payments_stripe_id ON payments(stripe_payment_id);
 
 -- ============================================
 -- BOOKING STATUS HISTORY (Audit Trail)
