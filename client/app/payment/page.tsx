@@ -69,8 +69,8 @@ export default function PaymentPage() {
         setError('Unable to start checkout. Please try again.');
         setIsLoading(false);
       }
-    } catch {
-      setError('Unable to reach the payment service. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to reach the payment service. Please try again.');
       setIsLoading(false);
     }
   };

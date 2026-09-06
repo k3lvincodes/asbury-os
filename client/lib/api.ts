@@ -15,14 +15,30 @@ export async function apiPost<T>(
   endpoint: string,
   data: any
 ): Promise<ApiResponse<T>> {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  return response.json();
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  } catch (err) {
+    throw new Error(
+      `Network error (${API_URL}${endpoint}): ${(err as Error).message}`
+    );
+  }
+
+  const text = await response.text();
+  let json: ApiResponse<T>;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = { success: false, error: `Request failed with status ${response.status}` };
+  }
+
+  return json;
 }
 
 export async function apiPut<T>(
