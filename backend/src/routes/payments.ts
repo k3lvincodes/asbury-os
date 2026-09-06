@@ -24,6 +24,13 @@ payments.post('/create-checkout', async (c) => {
     );
   }
 
+  if (!c.env.STRIPE_SECRET_KEY) {
+    return c.json(
+      { success: false, error: 'Stripe is not configured. Set STRIPE_SECRET_KEY on the backend.' },
+      500
+    );
+  }
+
   const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
   const bookingNumber = generateBookingNumber();
 
@@ -47,7 +54,7 @@ payments.post('/create-checkout', async (c) => {
     return c.json(
       {
         success: false,
-        error: 'Unable to create checkout session. Please try again.',
+        error: err instanceof Error ? err.message : 'Unable to create checkout session. Please try again.',
       },
       500
     );
