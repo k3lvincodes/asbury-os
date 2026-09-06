@@ -66,7 +66,7 @@ export default function PaymentPage() {
         setBookingNumber(res.data.bookingNumber);
         window.location.href = res.data.url;
       } else {
-        setError('Unable to start checkout. Please try again.');
+        setError(res.error || 'Unable to start checkout. Please try again.');
         setIsLoading(false);
       }
     } catch (err) {
