@@ -47,6 +47,7 @@ Thumbs.db
 
 # Wrangler
 .wrangler/
+.dev.vars
 
 # Supabase
 supabase/.temp/
