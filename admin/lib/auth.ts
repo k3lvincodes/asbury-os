@@ -57,6 +57,10 @@ export async function apiAuth<T>(
     json = { success: false, error: `Request failed with status ${response.status}` };
   }
 
+  if (!response.ok && !json.error) {
+    json = { success: false, error: `Request failed with status ${response.status}` };
+  }
+
   return json;
 }
 
@@ -65,7 +69,7 @@ export async function signUp(
   email: string,
   password: string
 ): Promise<ApiResponse<{ user: User; token: string }>> {
-  return apiAuth('/auth/signup', {
+  return apiAuth('/api/v1/auth/signup', {
     method: 'POST',
     body: JSON.stringify({ name, email, password }),
   });
@@ -75,12 +79,12 @@ export async function signIn(
   email: string,
   password: string
 ): Promise<ApiResponse<{ user: User; token: string }>> {
-  return apiAuth('/auth/login', {
+  return apiAuth('/api/v1/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
 }
 
 export async function getMe(): Promise<ApiResponse<{ user: User }>> {
-  return apiAuth('/auth/me');
+  return apiAuth('/api/v1/auth/me');
 }

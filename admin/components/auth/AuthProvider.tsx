@@ -23,6 +23,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadUser = useCallback(async () => {
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await getMe();
       if (res.success && res.data) {
@@ -86,6 +91,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     router.push('/login');
   };
+
+  if (loading && !PUBLIC_PATHS.includes(pathname)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-sm text-gray-500">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider

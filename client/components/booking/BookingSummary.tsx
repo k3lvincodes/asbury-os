@@ -21,7 +21,7 @@ export default function BookingSummary({
 }: BookingSummaryProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-semibold text-primary">Booking Summary</h3>
+      <h3 className="text-lg font-semibold text-navy">Booking Summary</h3>
       
       <div className="mt-4 space-y-3">
         <div className="flex justify-between">
@@ -56,7 +56,7 @@ export default function BookingSummary({
           
           <div className="flex justify-between border-t border-gray-200 pt-3 mt-3">
             <span className="text-lg font-semibold">Total Due</span>
-            <span className="text-lg font-semibold text-primary">
+            <span className="text-lg font-semibold text-navy">
               {formatCurrency(amountDueCents)}
             </span>
           </div>

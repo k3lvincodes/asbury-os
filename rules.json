@@ -13,6 +13,20 @@
       "action": "require",
       "trigger": "step_completion",
       "message": "After completing each implementation step, commit all changes to GitHub before proceeding to the next step."
+    },
+    {
+      "id": "no-wrangler-secret-put",
+      "description": "Do not use wrangler secret put command in this project",
+      "command": "wrangler secret put",
+      "action": "deny",
+      "message": "wrangler secret put should not be used. Secrets are managed via environment variables and .env.example files per service."
+    },
+    {
+      "id": "no-env-files",
+      "description": "Never work with .env files, only use .env.example",
+      "files": ["**/.env", "**/.env.local", "**/.env.development.local", "**/.env.test.local", "**/.env.production.local"],
+      "action": "deny",
+      "message": "Do not create, read, or modify .env files. Only work with .env.example files. Copy .env.example to .env locally if needed, but .env files should never be committed or directly edited."
     }
   ]
 }

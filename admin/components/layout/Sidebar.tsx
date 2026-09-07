@@ -17,14 +17,14 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r border-gray-200 bg-navy">
-      <div className="flex h-16 items-center border-b border-gray-700 px-4">
+    <div className="flex h-screen w-64 flex-col border-r border-gray-800 bg-black">
+      <div className="flex h-16 items-center border-b border-gray-800 px-4">
         <Link href="/dashboard" className="flex items-center">
           <Image
             src="/aos_logo.png"
             alt="Asbury Outdoor Services"
-            width={120}
-            height={45}
+            width={70}
+            height={26}
             priority
           />
         </Link>
@@ -38,7 +38,7 @@ export default function Sidebar() {
               'flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
               pathname === item.href
                 ? 'bg-forest text-white'
-                : 'text-gray-300 hover:bg-navy-600 hover:text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
             )}
           >
             {item.name}

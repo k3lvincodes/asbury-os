@@ -24,22 +24,17 @@ export default function StepIndicator({ steps }: StepIndicatorProps) {
               'relative'
             )}
           >
-            {step.status === 'complete' ? (
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="h-0.5 w-full bg-accent" />
-              </div>
-            ) : step.status === 'current' ? (
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="h-0.5 w-full bg-gray-200" />
-              </div>
-            ) : (
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="h-0.5 w-full bg-gray-200" />
+            {stepIdx !== steps.length - 1 && (
+              <div className="absolute top-0 left-0 h-8 w-full flex items-center" aria-hidden="true">
+                <div className={cn(
+                  'h-0.5 w-full',
+                  step.status === 'complete' ? 'bg-forest' : 'bg-gray-200'
+                )} />
               </div>
             )}
             <div className="relative flex h-8 w-8 items-center justify-center rounded-full">
               {step.status === 'complete' ? (
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-accent">
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-forest">
                   <svg
                     className="h-5 w-5 text-white"
                     viewBox="0 0 20 20"
@@ -54,8 +49,8 @@ export default function StepIndicator({ steps }: StepIndicatorProps) {
                   </svg>
                 </div>
               ) : step.status === 'current' ? (
-                <div className="flex h-full w-full items-center justify-center rounded-full border-2 border-accent bg-white">
-                  <span className="text-sm font-medium text-accent">{step.id}</span>
+                <div className="flex h-full w-full items-center justify-center rounded-full border-2 border-forest bg-white">
+                  <span className="text-sm font-medium text-forest">{step.id}</span>
                 </div>
               ) : (
                 <div className="flex h-full w-full items-center justify-center rounded-full border-2 border-gray-300 bg-white">
@@ -67,7 +62,7 @@ export default function StepIndicator({ steps }: StepIndicatorProps) {
               <span
                 className={cn(
                   'text-xs font-semibold',
-                  step.status === 'current' ? 'text-accent' : 'text-gray-500'
+                  step.status === 'current' ? 'text-forest' : 'text-gray-500'
                 )}
               >
                 {step.name}

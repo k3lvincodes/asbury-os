@@ -43,4 +43,10 @@ export function getDaysBetween(start: Date, end: Date): number {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
-export { calculateCustomPrice } from '../../shared/utils/formatting';
+const CUSTOM_BASE_PRICE_CENTS = 22500;
+const CUSTOM_EXTRA_DAY_PRICE_CENTS = 7500;
+
+export function calculateCustomPrice(days: number): number {
+  if (days <= 0) return 0;
+  return CUSTOM_BASE_PRICE_CENTS + (days - 1) * CUSTOM_EXTRA_DAY_PRICE_CENTS;
+}

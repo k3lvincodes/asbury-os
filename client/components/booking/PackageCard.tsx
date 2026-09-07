@@ -30,7 +30,7 @@ export default function PackageCard({
       className={cn(
         'relative rounded-lg border-2 p-6 cursor-pointer transition-all',
         isSelected
-          ? 'border-accent bg-accent-light'
+          ? 'border-forest bg-forest-light'
           : 'border-gray-200 hover:border-gray-300'
       )}
       onClick={() => onSelect(slug)}
@@ -38,7 +38,7 @@ export default function PackageCard({
       {isSelected && (
         <div className="absolute top-2 right-2">
           <svg
-            className="h-6 w-6 text-accent"
+            className="h-6 w-6 text-forest"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth="2"
@@ -52,10 +52,10 @@ export default function PackageCard({
           </svg>
         </div>
       )}
-      <h3 className="text-xl font-semibold text-primary">{name}</h3>
+      <h3 className="text-xl font-semibold text-navy">{name}</h3>
       <p className="mt-2 text-sm text-gray-600">{description}</p>
       <div className="mt-4">
-        <span className="text-3xl font-bold text-primary">
+        <span className="text-3xl font-bold text-navy">
           {formatCurrency(basePriceCents)}
         </span>
         <span className="text-sm text-gray-500"> / {durationText}</span>

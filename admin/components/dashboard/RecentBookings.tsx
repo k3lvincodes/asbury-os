@@ -7,7 +7,7 @@ interface Booking {
   customerName: string;
   packageName: string;
   startDate: string;
-  amountDue: number;
+  amountDueCents: number;
   status: string;
 }
 
@@ -35,7 +35,14 @@ export default function RecentBookings({ bookings }: RecentBookingsProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {bookings.map((booking) => (
+              {bookings.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
+                    No bookings yet
+                  </td>
+                </tr>
+              ) : (
+                bookings.map((booking) => (
                 <tr key={booking.id}>
                   <td className="whitespace-nowrap px-6 py-4">
                     <Link href={`/reservations/${booking.id}`} className="text-sm font-medium text-forest hover:text-forest-600">
@@ -45,7 +52,7 @@ export default function RecentBookings({ bookings }: RecentBookingsProps) {
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{booking.customerName}</td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{booking.packageName}</td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(booking.startDate)}</td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatCurrency(booking.amountDue)}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatCurrency(booking.amountDueCents)}</td>
                   <td className="whitespace-nowrap px-6 py-4">
                     <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
                       booking.status === 'confirmed' ? 'bg-green-100 text-green-800'
@@ -56,7 +63,8 @@ export default function RecentBookings({ bookings }: RecentBookingsProps) {
                     </span>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>

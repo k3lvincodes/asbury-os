@@ -1,5 +1,3 @@
-export * from '../../shared/types';
-
 export interface BookingStep {
   id: number;
   name: string;

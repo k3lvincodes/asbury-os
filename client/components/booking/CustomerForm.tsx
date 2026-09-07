@@ -38,7 +38,7 @@ export default function CustomerForm({ onSubmit, defaultValues }: CustomerFormPr
           id="fullName"
           {...register('fullName')}
           className={cn(
-            'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent',
+            'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest',
             errors.fullName && 'border-red-500'
           )}
         />
@@ -56,7 +56,7 @@ export default function CustomerForm({ onSubmit, defaultValues }: CustomerFormPr
           id="email"
           {...register('email')}
           className={cn(
-            'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent',
+            'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest',
             errors.email && 'border-red-500'
           )}
         />
@@ -74,7 +74,7 @@ export default function CustomerForm({ onSubmit, defaultValues }: CustomerFormPr
           id="phone"
           {...register('phone')}
           className={cn(
-            'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent',
+            'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest',
             errors.phone && 'border-red-500'
           )}
         />
@@ -92,7 +92,7 @@ export default function CustomerForm({ onSubmit, defaultValues }: CustomerFormPr
           {...register('deliveryAddress')}
           rows={3}
           className={cn(
-            'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent',
+            'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest',
             errors.deliveryAddress && 'border-red-500'
           )}
         />
@@ -104,7 +104,7 @@ export default function CustomerForm({ onSubmit, defaultValues }: CustomerFormPr
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-md bg-accent px-4 py-2 text-white font-medium hover:bg-accent-600 disabled:opacity-50"
+        className="w-full rounded-md bg-forest px-4 py-2 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
       >
         {isSubmitting ? 'Submitting...' : 'Continue'}
       </button>
