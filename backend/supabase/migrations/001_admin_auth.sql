@@ -31,3 +31,12 @@ CREATE TABLE admin_users (
 -- Index for fast email lookups during signup/login
 CREATE INDEX idx_admin_users_email ON admin_users(email);
 CREATE INDEX idx_allowed_admin_emails_email ON allowed_admin_emails(email);
+
+-- ============================================
+-- ROW LEVEL SECURITY
+-- ============================================
+ALTER TABLE allowed_admin_emails ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+
+-- No public policies — only service role (used by backend) can access these tables
+-- This blocks all direct anon/key access to admin data
