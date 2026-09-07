@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import AdminHeader from '@/components/layout/AdminHeader';
 import { formatDate, formatCurrency } from '@/lib/utils';
+import { apiAuth } from '@/lib/auth';
 
 interface Customer {
   id: string;
@@ -17,59 +18,32 @@ interface Customer {
   createdAt: string;
 }
 
-// Mock data - in production, fetch from API
-const mockCustomers: Customer[] = [
-  {
-    id: '1',
-    fullName: 'John Smith',
-    email: 'john@example.com',
-    phone: '+13045551234',
-    deliveryAddress: '123 Main St, Charleston, WV 25301',
-    totalBookings: 3,
-    totalSpentCents: 97500,
-    lastBookingDate: '2026-09-10',
-    createdAt: '2026-08-15',
-  },
-  {
-    id: '2',
-    fullName: 'Jane Doe',
-    email: 'jane@example.com',
-    phone: '+13045555678',
-    deliveryAddress: '456 Oak Ave, Charleston, WV 25302',
-    totalBookings: 1,
-    totalSpentCents: 22500,
-    lastBookingDate: '2026-09-05',
-    createdAt: '2026-09-01',
-  },
-  {
-    id: '3',
-    fullName: 'Bob Wilson',
-    email: 'bob@example.com',
-    phone: '+13045559012',
-    deliveryAddress: '789 Pine Rd, Huntington, WV 25701',
-    totalBookings: 5,
-    totalSpentCents: 210000,
-    lastBookingDate: '2026-09-15',
-    createdAt: '2026-06-20',
-  },
-  {
-    id: '4',
-    fullName: 'Alice Brown',
-    email: 'alice@example.com',
-    phone: '+13045553456',
-    deliveryAddress: '321 Elm Blvd, Morgantown, WV 26501',
-    totalBookings: 2,
-    totalSpentCents: 60000,
-    lastBookingDate: '2026-09-20',
-    createdAt: '2026-07-10',
-  },
-];
-
 export default function CustomersPage() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  const filtered = mockCustomers.filter(
+  useEffect(() => {
+    async function fetchCustomers() {
+      try {
+        const res = await apiAuth<Customer[]>('/api/v1/admin/customers');
+        if (res.success && res.data) {
+          setCustomers(res.data);
+        } else {
+          setError(res.error || 'Failed to load customers');
+        }
+      } catch {
+        setError('Failed to load customers');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCustomers();
+  }, []);
+
+  const filtered = customers.filter(
     (c) =>
       c.fullName.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -84,10 +58,9 @@ export default function CustomersPage() {
         <main className="flex-1 p-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-navy">Customers</h1>
-            <span className="text-sm text-gray-500">{mockCustomers.length} total customers</span>
+            {!loading && <span className="text-sm text-gray-500">{customers.length} total customers</span>}
           </div>
 
-          {/* Search */}
           <div className="mt-6">
             <div className="max-w-md">
               <label htmlFor="search" className="block text-sm font-medium text-gray-700">Search</label>
@@ -102,55 +75,65 @@ export default function CustomersPage() {
             </div>
           </div>
 
-          {/* Customer Table */}
-          <div className="mt-6 overflow-hidden bg-white shadow sm:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Bookings</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Total Spent</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Last Booking</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {filtered.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm font-medium text-navy">{customer.fullName}</div>
-                      <div className="text-xs text-gray-400">Since {formatDate(customer.createdAt)}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm text-gray-900">{customer.email}</div>
-                      <div className="text-xs text-gray-400">{customer.phone}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{customer.totalBookings}</td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{formatCurrency(customer.totalSpentCents)}</td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(customer.lastBookingDate)}</td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <button
-                        onClick={() => setSelectedCustomer(customer)}
-                        className="text-sm font-medium text-forest hover:text-forest-600"
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
-                      No customers found matching &ldquo;{search}&rdquo;
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {loading && (
+            <div className="mt-6 text-sm text-gray-500">Loading customers...</div>
+          )}
 
-          {/* Customer Detail Modal */}
+          {error && (
+            <div className="mt-6 rounded-md bg-red-50 p-4">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <div className="mt-6 overflow-hidden bg-white shadow sm:rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Bookings</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Total Spent</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Last Booking</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {filtered.map((customer) => (
+                    <tr key={customer.id} className="hover:bg-gray-50">
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="text-sm font-medium text-navy">{customer.fullName}</div>
+                        <div className="text-xs text-gray-400">Since {formatDate(customer.createdAt)}</div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="text-sm text-gray-900">{customer.email}</div>
+                        <div className="text-xs text-gray-400">{customer.phone}</div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{customer.totalBookings}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{formatCurrency(customer.totalSpentCents)}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(customer.lastBookingDate)}</td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <button
+                          onClick={() => setSelectedCustomer(customer)}
+                          className="text-sm font-medium text-forest hover:text-forest-600"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
+                        {customers.length === 0 ? 'No customers yet' : `No customers found matching "${search}"`}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {selectedCustomer && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
               <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">

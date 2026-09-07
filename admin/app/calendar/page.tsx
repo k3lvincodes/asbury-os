@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import AdminHeader from '@/components/layout/AdminHeader';
+import { apiAuth } from '@/lib/auth';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -19,24 +20,12 @@ interface BookingEvent {
   status: string;
 }
 
-// Mock data - in production, fetch from API
-const mockBookings: BookingEvent[] = [
-  { id: '1', bookingNumber: 'AOS-2026-0001', customerName: 'John Smith', startDate: '2026-09-10', endDate: '2026-09-13', status: 'confirmed' },
-  { id: '2', bookingNumber: 'AOS-2026-0002', customerName: 'Jane Doe', startDate: '2026-09-05', endDate: '2026-09-06', status: 'pending' },
-  { id: '3', bookingNumber: 'AOS-2026-0003', customerName: 'Bob Wilson', startDate: '2026-09-15', endDate: '2026-09-22', status: 'confirmed' },
-  { id: '4', bookingNumber: 'AOS-2026-0004', customerName: 'Alice Brown', startDate: '2026-09-20', endDate: '2026-09-21', status: 'active' },
-];
-
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
 function getFirstDayOfMonth(year: number, month: number): number {
   return new Date(year, month, 1).getDay();
-}
-
-function formatDateStr(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 const statusColors: Record<string, string> = {
@@ -52,6 +41,27 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedBooking, setSelectedBooking] = useState<BookingEvent | null>(null);
+  const [bookings, setBookings] = useState<BookingEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBookings() {
+      setLoading(true);
+      try {
+        const res = await apiAuth<BookingEvent[]>(
+          `/api/v1/admin/calendar?month=${currentMonth + 1}&year=${currentYear}`
+        );
+        if (res.success && res.data) {
+          setBookings(res.data);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBookings();
+  }, [currentMonth, currentYear]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
@@ -76,7 +86,7 @@ export default function CalendarPage() {
 
   const getBookingsForDay = (day: number): BookingEvent[] => {
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return mockBookings.filter((b) => dateStr >= b.startDate && dateStr <= b.endDate);
+    return bookings.filter((b) => dateStr >= b.startDate && dateStr <= b.endDate);
   };
 
   const calendarDays = useMemo(() => {
@@ -113,7 +123,6 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          {/* Legend */}
           <div className="mt-4 flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded-full bg-forest" />
@@ -129,95 +138,108 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          {/* Calendar Grid */}
-          <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-            <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
-              {DAYS.map((day) => (
-                <div key={day} className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  {day}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7">
-              {calendarDays.map((day, idx) => {
-                const bookings = day ? getBookingsForDay(day) : [];
-                const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+          {loading && (
+            <div className="mt-6 text-sm text-gray-500">Loading calendar...</div>
+          )}
 
-                return (
-                  <div
-                    key={idx}
-                    className={`min-h-[100px] border-b border-r border-gray-100 p-1.5 ${
-                      day ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
-                    }`}
-                  >
-                    {day && (
-                      <>
-                        <span
-                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
-                            isToday ? 'bg-forest text-white' : 'text-gray-700'
-                          }`}
-                        >
-                          {day}
-                        </span>
-                        <div className="mt-1 space-y-0.5">
-                          {bookings.map((booking) => (
-                            <button
-                              key={booking.id}
-                              onClick={() => setSelectedBooking(booking)}
-                              className={`w-full truncate rounded px-1.5 py-0.5 text-left text-[10px] font-medium leading-tight ${
-                                statusColors[booking.status] || 'bg-gray-100 text-gray-600'
-                              }`}
-                              title={`${booking.bookingNumber} - ${booking.customerName}`}
-                            >
-                              {booking.customerName}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Upcoming Bookings */}
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold text-navy">All Bookings This Month</h2>
-            <div className="mt-4 overflow-hidden bg-white shadow sm:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Booking #</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Dates</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {mockBookings.map((booking) => (
-                    <tr key={booking.id}>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-forest">{booking.bookingNumber}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{booking.customerName}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{booking.startDate} → {booking.endDate}</td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                          booking.status === 'confirmed' ? 'bg-green-100 text-green-800'
-                          : booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800'
-                          : booking.status === 'active' ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {booking.status}
-                        </span>
-                      </td>
-                    </tr>
+          {!loading && (
+            <>
+              <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+                <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
+                  {DAYS.map((day) => (
+                    <div key={day} className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      {day}
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </div>
+                <div className="grid grid-cols-7">
+                  {calendarDays.map((day, idx) => {
+                    const dayBookings = day ? getBookingsForDay(day) : [];
+                    const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
-          {/* Booking Detail Modal */}
+                    return (
+                      <div
+                        key={idx}
+                        className={`min-h-[100px] border-b border-r border-gray-100 p-1.5 ${
+                          day ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
+                        }`}
+                      >
+                        {day && (
+                          <>
+                            <span
+                              className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+                                isToday ? 'bg-forest text-white' : 'text-gray-700'
+                              }`}
+                            >
+                              {day}
+                            </span>
+                            <div className="mt-1 space-y-0.5">
+                              {dayBookings.map((booking) => (
+                                <button
+                                  key={booking.id}
+                                  onClick={() => setSelectedBooking(booking)}
+                                  className={`w-full truncate rounded px-1.5 py-0.5 text-left text-[10px] font-medium leading-tight ${
+                                    statusColors[booking.status] || 'bg-gray-100 text-gray-600'
+                                  }`}
+                                  title={`${booking.bookingNumber} - ${booking.customerName}`}
+                                >
+                                  {booking.customerName}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold text-navy">All Bookings This Month</h2>
+                <div className="mt-4 overflow-hidden bg-white shadow sm:rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Booking #</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Dates</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {bookings.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
+                            No bookings this month
+                          </td>
+                        </tr>
+                      ) : (
+                        bookings.map((booking) => (
+                          <tr key={booking.id}>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-forest">{booking.bookingNumber}</td>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{booking.customerName}</td>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{booking.startDate} → {booking.endDate}</td>
+                            <td className="whitespace-nowrap px-6 py-4">
+                              <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                                booking.status === 'confirmed' ? 'bg-green-100 text-green-800'
+                                : booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800'
+                                : booking.status === 'active' ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {booking.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+
           {selectedBooking && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
               <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">

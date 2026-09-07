@@ -259,7 +259,16 @@ admin.get('/calendar', async (c) => {
     return c.json({ success: false, error: error.message }, 500);
   }
 
-  return c.json({ success: true, data: data ?? [] });
+  const bookings = (data ?? []).map((r: any) => ({
+    id: r.id,
+    bookingNumber: r.booking_number,
+    customerName: r.customer?.full_name ?? '',
+    startDate: r.rental_start_date,
+    endDate: r.rental_end_date,
+    status: r.booking_status,
+  }));
+
+  return c.json({ success: true, data: bookings });
 });
 
 // Get signed agreements

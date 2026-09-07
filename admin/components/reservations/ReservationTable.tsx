@@ -16,8 +16,8 @@ interface Reservation {
   packageName: string;
   startDate: string;
   endDate: string;
-  amountDue: number;
-  bookingStatus: string;
+  amountDueCents: number;
+  status: string;
   paymentStatus: string;
 }
 
@@ -42,11 +42,11 @@ const columns = [
     header: 'End Date',
     cell: (info) => formatDate(info.getValue()),
   }),
-  columnHelper.accessor('amountDue', {
+  columnHelper.accessor('amountDueCents', {
     header: 'Amount',
     cell: (info) => formatCurrency(info.getValue()),
   }),
-  columnHelper.accessor('bookingStatus', {
+  columnHelper.accessor('status', {
     header: 'Status',
     cell: (info) => (
       <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
