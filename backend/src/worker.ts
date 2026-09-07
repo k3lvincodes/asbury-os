@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { serve } from '@hono/node-server';
 import { requireAuth } from './middleware/auth';
 import auth from './routes/auth';
 import bookings from './routes/bookings';
@@ -15,13 +16,13 @@ import admin from './routes/admin';
 import settings from './routes/settings';
 
 export interface Env {
-  BOOKING_HOLDS: KVNamespace;
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
   CLIENT_URL: string;
+  ADMIN_URL: string;
   CLOUDINARY_CLOUD_NAME: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
@@ -34,6 +35,29 @@ export interface Env {
 }
 
 const app = new Hono<{ Bindings: Env }>();
+
+// Middleware to inject environment variables into c.env (Node.js compatibility)
+app.use('*', async (c, next) => {
+  c.env = {
+    SUPABASE_URL: process.env.SUPABASE_URL || '',
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+    CLIENT_URL: process.env.CLIENT_URL || '',
+    ADMIN_URL: process.env.ADMIN_URL || '',
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
+    RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
+    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
+    TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || '',
+    JWT_SECRET: process.env.JWT_SECRET || '',
+    ENVIRONMENT: process.env.NODE_ENV || 'development',
+  } as Env;
+  await next();
+});
 
 // Middleware
 app.use('*', cors());
@@ -68,6 +92,14 @@ app.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-export default {
+// Start Node.js server
+const port = parseInt(process.env.PORT || '8787', 10);
+
+console.log(`Server starting on port ${port}...`);
+
+serve({
   fetch: app.fetch,
-};
+  port,
+});
+
+export default app;

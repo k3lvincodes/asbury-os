@@ -1,39 +1,50 @@
-// For Cloudflare Workers, KV is accessed via environment bindings
-// See wrangler.toml for KV namespace configuration
+// In-memory store for booking holds (Node.js compatible)
+// For production, consider using Redis or database-based caching
 
-export interface KVEnv {
-  BOOKING_HOLDS: KVNamespace;
+const holdsStore = new Map<string, { value: string; expiresAt: number }>();
+
+function getHoldKey(trailerId: string, startDate: string, endDate: string): string {
+  return `hold:${trailerId}:${startDate}:${endDate}`;
 }
 
-// Helper functions for KV operations
+// Helper functions for booking holds (in-memory implementation)
 export async function getBookingHold(
-  kv: KVNamespace,
   trailerId: string,
   startDate: string,
   endDate: string
 ): Promise<string | null> {
-  const key = `hold:${trailerId}:${startDate}:${endDate}`;
-  return kv.get(key);
+  const key = getHoldKey(trailerId, startDate, endDate);
+  const entry = holdsStore.get(key);
+  
+  if (!entry) return null;
+  
+  if (Date.now() > entry.expiresAt) {
+    holdsStore.delete(key);
+    return null;
+  }
+  
+  return entry.value;
 }
 
 export async function setBookingHold(
-  kv: KVNamespace,
   trailerId: string,
   startDate: string,
   endDate: string,
   reservationId: string,
   ttlSeconds: number = 900 // 15 minutes
 ): Promise<void> {
-  const key = `hold:${trailerId}:${startDate}:${endDate}`;
-  await kv.put(key, reservationId, { expirationTtl: ttlSeconds });
+  const key = getHoldKey(trailerId, startDate, endDate);
+  holdsStore.set(key, {
+    value: reservationId,
+    expiresAt: Date.now() + (ttlSeconds * 1000),
+  });
 }
 
 export async function deleteBookingHold(
-  kv: KVNamespace,
   trailerId: string,
   startDate: string,
   endDate: string
 ): Promise<void> {
-  const key = `hold:${trailerId}:${startDate}:${endDate}`;
-  await kv.delete(key);
+  const key = getHoldKey(trailerId, startDate, endDate);
+  holdsStore.delete(key);
 }
