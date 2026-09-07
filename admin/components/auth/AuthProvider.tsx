@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { User, signIn, signUp, getMe, setToken, removeToken } from '@/lib/auth';
+import { User, signIn as apiSignIn, signUp as apiSignUp, getMe, setToken, removeToken } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleSignIn = async (email: string, password: string) => {
     try {
-      const res = await signIn(email, password);
+      const res = await apiSignIn(email, password);
       if (res.success && res.data) {
         setToken(res.data.token);
         setUser(res.data.user);
@@ -59,14 +59,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return {};
       }
       return { error: res.error || 'Invalid credentials' };
-    } catch {
-      return { error: 'Network error. Please try again.' };
+    } catch (err) {
+      console.error('Sign in error:', err);
+      return { error: err instanceof Error ? err.message : 'Network error. Please try again.' };
     }
   };
 
   const handleSignUp = async (name: string, email: string, password: string) => {
     try {
-      const res = await signUp(name, email, password);
+      const res = await apiSignUp(name, email, password);
       if (res.success && res.data) {
         setToken(res.data.token);
         setUser(res.data.user);
@@ -74,8 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return {};
       }
       return { error: res.error || 'Failed to create account' };
-    } catch {
-      return { error: 'Network error. Please try again.' };
+    } catch (err) {
+      console.error('Sign up error:', err);
+      return { error: err instanceof Error ? err.message : 'Network error. Please try again.' };
     }
   };
 
