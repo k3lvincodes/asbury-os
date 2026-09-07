@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { requireAuth } from './middleware/auth';
+import auth from './routes/auth';
 import bookings from './routes/bookings';
 import availability from './routes/availability';
 import payments from './routes/payments';
@@ -46,8 +48,11 @@ app.route('/api/v1', agreements);
 // Webhook routes (no auth)
 app.route('/api/v1/webhooks', webhooks);
 
-// Protected routes (require auth)
-// app.use('/api/v1/admin/*', requireAuth);
+// Auth routes (public — signup/login)
+app.route('/api/v1', auth);
+
+// Protected admin routes (require auth)
+app.use('/api/v1/admin/*', requireAuth);
 app.route('/api/v1/admin', admin);
 app.route('/api/v1/admin', charges);
 app.route('/api/v1/admin', notifications);

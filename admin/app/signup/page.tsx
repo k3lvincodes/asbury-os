@@ -5,8 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth/AuthProvider';
 
-export default function LoginPage() {
-  const { signIn } = useAuth();
+export default function SignupPage() {
+  const { signUp } = useAuth();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +18,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    const result = await signIn(email, password);
+    const result = await signUp(name, email, password);
     if (result.error) {
       setError(result.error);
     }
@@ -35,9 +36,9 @@ export default function LoginPage() {
             height={52}
             className="mx-auto"
           />
-          <h1 className="mt-4 text-2xl font-bold text-navy">Admin Login</h1>
+          <h1 className="mt-4 text-2xl font-bold text-navy">Create Admin Account</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Sign in to access the admin dashboard
+            Only authorized emails can create admin accounts
           </p>
         </div>
 
@@ -47,6 +48,22 @@ export default function LoginPage() {
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Full name
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
+            />
+          </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -72,12 +89,14 @@ export default function LoginPage() {
               id="password"
               name="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               required
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
             />
+            <p className="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
           </div>
 
           <button
@@ -85,14 +104,14 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full rounded-md bg-forest px-4 py-2 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
           >
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-medium text-forest hover:text-forest-600">
-            Sign up
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-forest hover:text-forest-600">
+            Sign in
           </Link>
         </p>
       </div>
