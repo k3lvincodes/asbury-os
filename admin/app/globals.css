@@ -12,3 +12,7 @@ body {
   background: rgb(var(--background-rgb));
   font-family: 'Inter', system-ui, sans-serif;
 }
+
+input, select, textarea, button {
+  font-family: inherit;
+}

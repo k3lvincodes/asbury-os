@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import StepIndicator from '@/components/booking/StepIndicator';
@@ -11,18 +11,46 @@ import Modal from '@/components/Modal';
 import { BOOKING_STEPS, PACKAGES } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
 import { cn, getDaysBetween, calculateCustomPrice } from '@/lib/utils';
+import { apiGet } from '@/lib/api';
+
+interface AvailabilityResponse {
+  trailerId: string;
+  month: number;
+  year: number;
+  bookedDates: string[];
+}
 
 export default function HomePage() {
   const router = useRouter();
   const { selectedPackage, setSelectedPackage, setCustomDays, setStartDate, setEndDate } = useBookingStore();
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [modalRange, setModalRange] = useState<DateRange | undefined>(undefined);
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
       status: idx === 0 ? 'current' as const : 'upcoming' as const,
     }))
   );
+
+  useEffect(() => {
+    async function fetchAvailability() {
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      try {
+        const res = await apiGet<AvailabilityResponse>(
+          `/api/v1/availability/dates?month=${month}&year=${year}`
+        );
+        if (res.success && res.data) {
+          setBookedDates(res.data.bookedDates);
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    fetchAvailability();
+  }, []);
 
   const handleCustomCardClick = () => {
     setIsCustomModalOpen(true);
@@ -62,7 +90,7 @@ export default function HomePage() {
     <Container className="py-12">
       <h1 className="text-3xl font-bold text-navy">Book a Trailer</h1>
       <p className="mt-2 text-gray-600">Select your rental package to get started.</p>
-      
+
       <div className="mt-8">
         <StepIndicator steps={steps} />
       </div>
@@ -140,6 +168,7 @@ export default function HomePage() {
         <DateRangePicker
           selected={modalRange}
           onSelect={handleModalRangeSelect}
+          bookedDates={bookedDates}
         />
 
         {modalRange?.from && modalRange.to && (

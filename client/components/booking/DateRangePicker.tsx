@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DayPicker } from 'react-day-picker';
 import type { DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -10,6 +10,7 @@ interface DateRangePickerProps {
   selected?: DateRange;
   onSelect: (range: DateRange | undefined) => void;
   disabledDates?: Date[];
+  bookedDates?: string[];
   minDate?: Date;
 }
 
@@ -17,9 +18,17 @@ export default function DateRangePicker({
   selected,
   onSelect,
   disabledDates = [],
+  bookedDates = [],
   minDate = new Date(),
 }: DateRangePickerProps) {
   const [month, setMonth] = useState<Date>(selected?.from || new Date());
+
+  const bookedDateObjects = useMemo(
+    () => bookedDates.map((d) => new Date(d + 'T00:00:00')),
+    [bookedDates]
+  );
+
+  const allDisabled = [...disabledDates, ...bookedDateObjects];
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -32,10 +41,10 @@ export default function DateRangePicker({
         numberOfMonths={1}
         disabled={[
           { before: minDate },
-          ...disabledDates,
+          ...allDisabled,
         ]}
         modifiers={{
-          booked: disabledDates,
+          booked: bookedDateObjects,
         }}
         modifiersStyles={{
           booked: {

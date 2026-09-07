@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ interface DatePickerProps {
   selected?: Date;
   onSelect: (date: Date | undefined) => void;
   disabledDates?: Date[];
+  bookedDates?: string[];
   minDate?: Date;
 }
 
@@ -16,9 +17,17 @@ export default function DatePicker({
   selected,
   onSelect,
   disabledDates = [],
+  bookedDates = [],
   minDate = new Date(),
 }: DatePickerProps) {
   const [month, setMonth] = useState<Date>(selected || new Date());
+
+  const bookedDateObjects = useMemo(
+    () => bookedDates.map((d) => new Date(d + 'T00:00:00')),
+    [bookedDates]
+  );
+
+  const allDisabled = [...disabledDates, ...bookedDateObjects];
 
   return (
     <div className="rounded-lg bg-white">
@@ -30,10 +39,10 @@ export default function DatePicker({
         onMonthChange={setMonth}
         disabled={[
           { before: minDate },
-          ...disabledDates,
+          ...allDisabled,
         ]}
         modifiers={{
-          booked: disabledDates,
+          booked: bookedDateObjects,
         }}
         modifiersStyles={{
           booked: {

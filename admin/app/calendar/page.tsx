@@ -28,6 +28,10 @@ function getFirstDayOfMonth(year: number, month: number): number {
   return new Date(year, month, 1).getDay();
 }
 
+function formatDayStr(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 const statusColors: Record<string, string> = {
   confirmed: 'bg-forest text-white',
   pending: 'bg-yellow-100 text-yellow-800 border border-yellow-300',
@@ -36,11 +40,19 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-600',
 };
 
+const statusBadgeColors: Record<string, string> = {
+  confirmed: 'bg-green-100 text-green-800',
+  pending: 'bg-yellow-100 text-yellow-800',
+  active: 'bg-blue-100 text-blue-800',
+  completed: 'bg-gray-100 text-gray-800',
+  cancelled: 'bg-red-100 text-red-800',
+};
+
 export default function CalendarPage() {
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedBooking, setSelectedBooking] = useState<BookingEvent | null>(null);
+  const [selectedDay, setSelectedDay] = useState<{ day: number; bookings: BookingEvent[] } | null>(null);
   const [bookings, setBookings] = useState<BookingEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,8 +97,13 @@ export default function CalendarPage() {
   };
 
   const getBookingsForDay = (day: number): BookingEvent[] => {
-    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = formatDayStr(currentYear, currentMonth, day);
     return bookings.filter((b) => dateStr >= b.startDate && dateStr <= b.endDate);
+  };
+
+  const handleDayClick = (day: number) => {
+    const dayBookings = getBookingsForDay(day);
+    setSelectedDay({ day, bookings: dayBookings });
   };
 
   const calendarDays = useMemo(() => {
@@ -160,8 +177,9 @@ export default function CalendarPage() {
                     return (
                       <div
                         key={idx}
+                        onClick={() => day && handleDayClick(day)}
                         className={`min-h-[100px] border-b border-r border-gray-100 p-1.5 ${
-                          day ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
+                          day ? 'cursor-pointer bg-white hover:bg-gray-50' : 'bg-gray-50'
                         }`}
                       >
                         {day && (
@@ -175,16 +193,15 @@ export default function CalendarPage() {
                             </span>
                             <div className="mt-1 space-y-0.5">
                               {dayBookings.map((booking) => (
-                                <button
+                                <div
                                   key={booking.id}
-                                  onClick={() => setSelectedBooking(booking)}
-                                  className={`w-full truncate rounded px-1.5 py-0.5 text-left text-[10px] font-medium leading-tight ${
+                                  className={`w-full truncate rounded px-1.5 py-0.5 text-[10px] font-medium leading-tight ${
                                     statusColors[booking.status] || 'bg-gray-100 text-gray-600'
                                   }`}
                                   title={`${booking.bookingNumber} - ${booking.customerName}`}
                                 >
                                   {booking.customerName}
-                                </button>
+                                </div>
                               ))}
                             </div>
                           </>
@@ -221,12 +238,7 @@ export default function CalendarPage() {
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{booking.customerName}</td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{booking.startDate} → {booking.endDate}</td>
                             <td className="whitespace-nowrap px-6 py-4">
-                              <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                                booking.status === 'confirmed' ? 'bg-green-100 text-green-800'
-                                : booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800'
-                                : booking.status === 'active' ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
-                              }`}>
+                              <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${statusBadgeColors[booking.status] || 'bg-gray-100 text-gray-800'}`}>
                                 {booking.status}
                               </span>
                             </td>
@@ -240,44 +252,50 @@ export default function CalendarPage() {
             </>
           )}
 
-          {selectedBooking && (
+          {selectedDay && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+              <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-navy">{selectedBooking.bookingNumber}</h3>
-                  <button onClick={() => setSelectedBooking(null)} className="text-gray-400 hover:text-gray-600">
+                  <h3 className="text-lg font-semibold text-navy">
+                    {MONTHS[currentMonth]} {selectedDay.day}, {currentYear}
+                  </h3>
+                  <button onClick={() => setSelectedDay(null)} className="text-gray-400 hover:text-gray-600">
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-                <div className="mt-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Customer</span>
-                    <span className="text-sm font-medium text-gray-900">{selectedBooking.customerName}</span>
+
+                {selectedDay.bookings.length === 0 ? (
+                  <p className="mt-6 text-center text-sm text-gray-500">No bookings on this day</p>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {selectedDay.bookings.map((booking) => (
+                      <div key={booking.id} className="rounded-lg border border-gray-200 p-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-forest">{booking.bookingNumber}</span>
+                          <span className={`inline-flex rounded-full px-2 text-xs font-semibold ${statusBadgeColors[booking.status] || 'bg-gray-100 text-gray-800'}`}>
+                            {booking.status}
+                          </span>
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Customer</span>
+                            <span className="font-medium text-gray-900">{booking.customerName}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Dates</span>
+                            <span className="text-gray-900">{booking.startDate} → {booking.endDate}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Start Date</span>
-                    <span className="text-sm font-medium text-gray-900">{selectedBooking.startDate}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">End Date</span>
-                    <span className="text-sm font-medium text-gray-900">{selectedBooking.endDate}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Status</span>
-                    <span className={`inline-flex rounded-full px-2 text-xs font-semibold ${
-                      selectedBooking.status === 'confirmed' ? 'bg-green-100 text-green-800'
-                      : selectedBooking.status === 'pending' ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {selectedBooking.status}
-                    </span>
-                  </div>
-                </div>
+                )}
+
                 <div className="mt-6 flex justify-end">
                   <button
-                    onClick={() => setSelectedBooking(null)}
+                    onClick={() => setSelectedDay(null)}
                     className="rounded-md bg-forest px-4 py-2 text-sm font-medium text-white hover:bg-forest-600"
                   >
                     Close

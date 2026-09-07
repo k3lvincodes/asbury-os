@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import StepIndicator from '@/components/booking/StepIndicator';
@@ -8,10 +8,20 @@ import DatePicker from '@/components/booking/DatePicker';
 import { BOOKING_STEPS } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
 import { formatDate, calculateEndDate, getDaysBetween, calculateCustomPrice } from '@/lib/utils';
+import { apiGet } from '@/lib/api';
+
+interface AvailabilityResponse {
+  trailerId: string;
+  month: number;
+  year: number;
+  bookedDates: string[];
+}
 
 export default function DatesPage() {
   const router = useRouter();
   const { startDate, endDate, setStartDate, setEndDate, selectedPackage, customDays } = useBookingStore();
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const [loadingAvailability, setLoadingAvailability] = useState(true);
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
@@ -20,6 +30,28 @@ export default function DatesPage() {
   );
 
   const isCustom = selectedPackage === 'custom';
+
+  useEffect(() => {
+    async function fetchAvailability() {
+      setLoadingAvailability(true);
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      try {
+        const res = await apiGet<AvailabilityResponse>(
+          `/api/v1/availability/dates?month=${month}&year=${year}`
+        );
+        if (res.success && res.data) {
+          setBookedDates(res.data.bookedDates);
+        }
+      } catch {
+        // silently fail — calendar will just show all dates as available
+      } finally {
+        setLoadingAvailability(false);
+      }
+    }
+    fetchAvailability();
+  }, []);
 
   const handleStartDateSelect = (date: Date | undefined) => {
     if (!date) {
@@ -31,7 +63,6 @@ export default function DatesPage() {
     setStartDate(date);
 
     if (!isCustom && selectedPackage) {
-      // Auto-calculate end date for standard packages
       const durationHours = selectedPackage === '24h' ? 24 : selectedPackage === '3d' ? 72 : 168;
       const end = calculateEndDate(date, durationHours);
       setEndDate(end);
@@ -65,7 +96,7 @@ export default function DatesPage() {
     <Container className="py-12">
       <h1 className="text-3xl font-bold text-navy">Select Dates</h1>
       <p className="mt-2 text-gray-600">Choose your rental start date.</p>
-      
+
       <div className="mt-8">
         <StepIndicator steps={steps} />
       </div>
@@ -75,11 +106,16 @@ export default function DatesPage() {
           <h2 className="text-xl font-semibold text-navy">Start Date</h2>
           <p className="mt-2 text-gray-600">Select when you want to pick up the trailer.</p>
           <div className="mt-4">
-            <DatePicker
-              selected={startDate ?? undefined}
-              onSelect={handleStartDateSelect}
-              disabledDates={endDate ? [endDate] : []}
-            />
+            {loadingAvailability ? (
+              <p className="text-sm text-gray-500">Loading availability...</p>
+            ) : (
+              <DatePicker
+                selected={startDate ?? undefined}
+                onSelect={handleStartDateSelect}
+                disabledDates={endDate ? [endDate] : []}
+                bookedDates={bookedDates}
+              />
+            )}
           </div>
         </div>
 
@@ -92,12 +128,17 @@ export default function DatesPage() {
           </p>
           {isCustom ? (
             <div className="mt-4">
-              <DatePicker
-                selected={endDate ?? undefined}
-                onSelect={handleEndDateSelect}
-                minDate={startDate ? new Date(startDate.getTime() + 24 * 60 * 60 * 1000) : undefined}
-                disabledDates={startDate ? [startDate] : []}
-              />
+              {loadingAvailability ? (
+                <p className="text-sm text-gray-500">Loading availability...</p>
+              ) : (
+                <DatePicker
+                  selected={endDate ?? undefined}
+                  onSelect={handleEndDateSelect}
+                  minDate={startDate ? new Date(startDate.getTime() + 24 * 60 * 60 * 1000) : undefined}
+                  disabledDates={startDate ? [startDate] : []}
+                  bookedDates={bookedDates}
+                />
+              )}
             </div>
           ) : (
             <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6">
