@@ -4,6 +4,7 @@ import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import { useBookingStore } from '@/lib/store';
+import { apiPost } from '@/lib/api';
 
 function ConfirmationContent() {
   const router = useRouter();
@@ -13,6 +14,7 @@ function ConfirmationContent() {
 
   useEffect(() => {
     if (bookingNumber) {
+      apiPost('/api/v1/payments/verify', { bookingNumber }).catch(() => {});
       reset();
     }
   }, [bookingNumber, reset]);

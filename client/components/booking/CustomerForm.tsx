@@ -2,8 +2,15 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { customerInfoSchema } from '../../../shared/utils/validation';
+import { z } from 'zod';
 import { cn } from '@/lib/utils';
+
+const customerInfoSchema = z.object({
+  fullName: z.string().min(1, 'Full name is required'),
+  email: z.string().email('Valid email is required'),
+  phone: z.string().min(1, 'Phone number is required'),
+  deliveryAddress: z.string().min(1, 'Delivery address is required'),
+});
 
 interface CustomerFormData {
   fullName: string;

@@ -14,5 +14,5 @@ body {
 }
 
 input, select, textarea, button {
-  font-family: inherit;
+  font-family: 'Inter', system-ui, sans-serif;
 }

@@ -150,6 +150,74 @@ payments.post('/create-checkout', async (c) => {
   }
 });
 
+// Verify payment and update reservation status
+payments.post('/verify', async (c) => {
+  const body = await c.req.json<{ bookingNumber?: string }>();
+  const bookingNumber = body?.bookingNumber;
+
+  if (!bookingNumber) {
+    return c.json({ success: false, error: 'Missing bookingNumber' }, 400);
+  }
+
+  if (!c.env.STRIPE_SECRET_KEY) {
+    return c.json({ success: false, error: 'Stripe is not configured.' }, 500);
+  }
+
+  const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
+  const supabase = createSupabaseServiceClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY);
+
+  try {
+    // Look up reservation
+    const { data: reservation, error: resError } = await supabase
+      .from('reservations')
+      .select('id, booking_number, payment_status')
+      .eq('booking_number', bookingNumber)
+      .single();
+
+    if (resError || !reservation) {
+      return c.json({ success: false, error: 'Reservation not found' }, 404);
+    }
+
+    // Already paid — nothing to do
+    if (reservation.payment_status === 'paid') {
+      return c.json({ success: true, data: { status: 'confirmed', paymentStatus: 'paid' } });
+    }
+
+    // Search Stripe for a checkout session matching this booking number
+    const sessions = await stripe.checkout.sessions.list({
+      limit: 5,
+    });
+
+    const session = sessions.data.find(
+      (s) => s.metadata?.bookingNumber === bookingNumber || s.client_reference_id === bookingNumber
+    );
+
+    if (!session) {
+      return c.json({ success: false, error: 'No Stripe session found for this booking' }, 404);
+    }
+
+    if (session.payment_status === 'paid') {
+      await supabase
+        .from('reservations')
+        .update({
+          booking_status: 'confirmed',
+          payment_status: 'paid',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', reservation.id);
+
+      return c.json({ success: true, data: { status: 'confirmed', paymentStatus: 'paid' } });
+    }
+
+    return c.json({ success: true, data: { status: reservation.payment_status, paymentStatus: reservation.payment_status } });
+  } catch (err) {
+    return c.json(
+      { success: false, error: err instanceof Error ? err.message : 'Verification failed' },
+      500
+    );
+  }
+});
+
 // Get payment history for a reservation
 payments.get('/:reservationId/history', async (c) => {
   const reservationId = c.req.param('reservationId');
