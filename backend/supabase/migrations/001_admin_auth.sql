@@ -1,6 +1,10 @@
 -- ============================================
 -- ADMIN AUTHENTICATION
 -- ============================================
+-- Drop existing tables if they exist (clean slate)
+DROP TABLE IF EXISTS admin_users CASCADE;
+DROP TABLE IF EXISTS allowed_admin_emails CASCADE;
+
 -- Emails permitted to create admin accounts
 CREATE TABLE allowed_admin_emails (
     id          SERIAL PRIMARY KEY,
