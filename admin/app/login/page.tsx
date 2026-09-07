@@ -25,17 +25,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="relative flex min-h-screen items-center justify-center bg-black">
+      <div className="absolute left-6 top-6">
+        <Image
+          src="/aos_logo.png"
+          alt="Asbury Outdoor Services"
+          width={120}
+          height={45}
+          priority
+        />
+      </div>
+
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
         <div className="text-center">
-          <Image
-            src="/aos_logo.png"
-            alt="Asbury Outdoor Services"
-            width={140}
-            height={52}
-            className="mx-auto"
-          />
-          <h1 className="mt-4 text-2xl font-bold text-navy">Admin Login</h1>
+          <h1 className="text-2xl font-bold text-navy">Admin Login</h1>
           <p className="mt-2 text-sm text-gray-600">
             Sign in to access the admin dashboard
           </p>
