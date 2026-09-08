@@ -114,7 +114,8 @@ admin.get('/reservations/:id', async (c) => {
     .select(`
       *,
       customer:customers(full_name, email, phone, delivery_address),
-      package:rental_packages(name, duration_hours, base_price_cents)
+      package:rental_packages(name, duration_hours, base_price_cents),
+      signed_agreements(signature_data)
     `)
     .eq('id', id)
     .single();
@@ -122,6 +123,8 @@ admin.get('/reservations/:id', async (c) => {
   if (error || !data) {
     return c.json({ success: false, error: 'Reservation not found' }, 404);
   }
+
+  const signedAgreement = data.signed_agreements?.[0];
 
   return c.json({
     success: true,
@@ -142,6 +145,7 @@ admin.get('/reservations/:id', async (c) => {
       bookingStatus: data.booking_status,
       paymentStatus: data.payment_status,
       agreementStatus: data.agreement_status,
+      signatureData: signedAgreement?.signature_data ?? null,
       createdAt: data.created_at,
     },
   });

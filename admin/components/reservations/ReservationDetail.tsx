@@ -17,6 +17,7 @@ interface ReservationDetailProps {
     bookingStatus: string;
     paymentStatus: string;
     agreementStatus: string;
+    signatureData?: string;
     notes?: string;
     createdAt: string;
   };
@@ -77,6 +78,20 @@ export default function ReservationDetail({ reservation }: ReservationDetailProp
               <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Notes</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2">{reservation.notes}</dd>
+              </div>
+            )}
+            {reservation.signatureData && (
+              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Customer Signature</dt>
+                <dd className="mt-1 sm:col-span-2">
+                  <div className="rounded-md border border-gray-200 bg-white p-4 inline-block">
+                    <img
+                      src={reservation.signatureData}
+                      alt="Customer Signature"
+                      className="max-h-24 w-auto"
+                    />
+                  </div>
+                </dd>
               </div>
             )}
           </dl>

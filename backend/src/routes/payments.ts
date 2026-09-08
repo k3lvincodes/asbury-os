@@ -91,15 +91,19 @@ payments.post('/create-checkout', async (c) => {
       return c.json({ success: false, error: 'No active trailer available' }, 500);
     }
 
-    // 3. Get package
-    const { data: pkg } = await supabase
-      .from('rental_packages')
-      .select('id')
-      .eq('slug', body.packageSlug)
-      .single();
+    // 3. Get package (skip for custom packages)
+    let packageId: string | null = null;
+    if (body.packageSlug && body.packageSlug !== 'custom') {
+      const { data: pkg } = await supabase
+        .from('rental_packages')
+        .select('id')
+        .eq('slug', body.packageSlug)
+        .single();
 
-    if (!pkg) {
-      return c.json({ success: false, error: 'Invalid package' }, 400);
+      if (!pkg) {
+        return c.json({ success: false, error: 'Invalid package' }, 400);
+      }
+      packageId = pkg.id;
     }
 
     // 4. Create reservation
@@ -109,7 +113,7 @@ payments.post('/create-checkout', async (c) => {
         booking_number: bookingNumber,
         customer_id: customerId,
         trailer_id: trailer.id,
-        package_id: pkg.id,
+        package_id: packageId,
         rental_start_date: body.rentalStartDate,
         rental_end_date: body.rentalEndDate,
         pickup_date: body.rentalEndDate,
