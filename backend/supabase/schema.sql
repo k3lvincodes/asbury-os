@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     trailer_id          UUID NOT NULL REFERENCES trailers(id),
 
     -- Package reference
-    package_id          UUID NOT NULL REFERENCES rental_packages(id),
+    package_id          UUID REFERENCES rental_packages(id),
 
     -- Dates
     rental_start_date   DATE NOT NULL,
