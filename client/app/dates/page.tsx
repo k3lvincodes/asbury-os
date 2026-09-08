@@ -28,8 +28,10 @@ interface CheckResponse {
 
 export default function DatesPage() {
   const router = useRouter();
-  const { startDate, endDate, setStartDate, setEndDate, selectedPackage, customDays, pricing } = useBookingStore();
+  const { startDate, endDate, setStartDate, setEndDate, selectedPackage, customDays, pricing, fetchPricing } = useBookingStore();
   const [bookedDates, setBookedDates] = useState<string[]>([]);
+
+  useEffect(() => { fetchPricing(); }, [fetchPricing]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState('');

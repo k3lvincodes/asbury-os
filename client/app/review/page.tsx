@@ -1,6 +1,4 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import StepIndicator from '@/components/booking/StepIndicator';
@@ -11,7 +9,9 @@ import { getDaysBetween, calculateCustomPrice } from '@/lib/utils';
 
 export default function ReviewPage() {
   const router = useRouter();
-  const { selectedPackage, startDate, endDate, customerInfo, customDays, pricing } = useBookingStore();
+  const { selectedPackage, startDate, endDate, customerInfo, customDays, pricing, fetchPricing } = useBookingStore();
+
+  useEffect(() => { fetchPricing(); }, [fetchPricing]);
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,

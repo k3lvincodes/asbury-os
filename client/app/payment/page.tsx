@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import StepIndicator from '@/components/booking/StepIndicator';
@@ -18,9 +18,11 @@ interface CheckoutResponse {
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { selectedPackage, customDays, startDate, endDate, customerInfo, setBookingNumber, agreementSignature, pricing } = useBookingStore();
+  const { selectedPackage, customDays, startDate, endDate, customerInfo, setBookingNumber, agreementSignature, pricing, fetchPricing } = useBookingStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => { fetchPricing(); }, [fetchPricing]);
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
