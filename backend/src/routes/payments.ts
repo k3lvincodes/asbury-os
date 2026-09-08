@@ -292,6 +292,20 @@ payments.post('/verify', async (c) => {
 
     console.log(`[verify] Stripe session ${session.id}, payment_status: ${session.payment_status}`);
 
+    // If payment isn't confirmed yet, poll a few times with backoff
+    // (Stripe may still be processing when the user returns from checkout)
+    if (session.payment_status !== 'paid' && stripeSessionId) {
+      const maxPolls = 4;
+      for (let i = 1; i <= maxPolls; i++) {
+        const delayMs = 2000 * i; // 2s, 4s, 6s, 8s
+        console.log(`[verify] Payment not yet confirmed, polling attempt ${i}/${maxPolls} in ${delayMs}ms`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+        console.log(`[verify] Poll ${i}: payment_status = ${session.payment_status}`);
+        if (session.payment_status === 'paid') break;
+      }
+    }
+
     if (session.payment_status === 'paid') {
       console.log(`[verify] Payment confirmed — updating reservation and sending notifications`);
       await supabase

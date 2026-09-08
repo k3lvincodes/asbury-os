@@ -435,7 +435,7 @@ export async function sendAdditionalChargeNotice(
 
 async function logNotification(supabase: SupabaseClient, data: NotificationData) {
   try {
-    await supabase.from('notifications').insert({
+    const { error } = await supabase.from('notifications').insert({
       reservation_id: data.reservationId,
       type: data.type,
       template: data.template,
@@ -446,6 +446,9 @@ async function logNotification(supabase: SupabaseClient, data: NotificationData)
       metadata: data.metadata || null,
       sent_at: data.status === 'sent' ? new Date().toISOString() : null,
     });
+    if (error) {
+      console.error('Supabase error logging notification:', error.message, error.code, error.details);
+    }
   } catch (error) {
     console.error('Failed to log notification to database:', error);
   }
