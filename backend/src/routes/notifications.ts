@@ -106,4 +106,26 @@ notifications.post('/send', async (c) => {
   });
 });
 
+// Mark notification as read
+notifications.put('/:id', async (c) => {
+  const id = c.req.param('id');
+
+  if (!c.env.SUPABASE_URL || !c.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return c.json({ success: false, error: 'Supabase is not configured.' }, 500);
+  }
+
+  const supabase = createSupabaseServiceClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY);
+
+  const { error } = await supabase
+    .from('notifications')
+    .update({ status: 'read' })
+    .eq('id', id);
+
+  if (error) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+
+  return c.json({ success: true });
+});
+
 export default notifications;
