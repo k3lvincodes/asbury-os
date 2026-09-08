@@ -6,17 +6,18 @@ import SignatureCanvas from 'react-signature-canvas';
 interface SignaturePadProps {
   onSignature: (dataUrl: string) => void;
   onClear: () => void;
+  defaultValue?: string | null;
 }
 
 const MIN_HEIGHT = 120;
 const MAX_HEIGHT = 220;
 const ASPECT_RATIO = 2.5;
 
-export default function SignaturePad({ onSignature, onClear }: SignaturePadProps) {
+export default function SignaturePad({ onSignature, onClear, defaultValue }: SignaturePadProps) {
   const canvasRef = useRef<SignatureCanvas>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 500, height: 200 });
-  const [isEmpty, setIsEmpty] = useState(true);
+  const [isEmpty, setIsEmpty] = useState(!defaultValue);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -34,6 +35,13 @@ export default function SignaturePad({ onSignature, onClear }: SignaturePadProps
     ro.observe(wrapper);
     return () => ro.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (defaultValue && canvasRef.current) {
+      canvasRef.current.fromDataURL(defaultValue);
+      setIsEmpty(false);
+    }
+  }, [defaultValue]);
 
   const handleClear = () => {
     canvasRef.current?.clear();

@@ -18,9 +18,9 @@ interface AgreementData {
 
 export default function AgreementPage() {
   const router = useRouter();
-  const { setAgreementSigned, setAgreementSignature } = useBookingStore();
-  const [signature, setSignature] = useState<string | null>(null);
-  const [accepted, setAccepted] = useState(false);
+  const { agreementSignature, agreementSigned, setAgreementSigned, setAgreementSignature } = useBookingStore();
+  const [signature, setSignature] = useState<string | null>(agreementSignature);
+  const [accepted, setAccepted] = useState(agreementSigned);
   const [agreement, setAgreement] = useState<AgreementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +87,7 @@ export default function AgreementPage() {
             <SignaturePad
               onSignature={setSignature}
               onClear={() => setSignature(null)}
+              defaultValue={agreementSignature}
             />
           </div>
 

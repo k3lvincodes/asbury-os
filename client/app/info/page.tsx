@@ -10,7 +10,7 @@ import { useBookingStore } from '@/lib/store';
 
 export default function InfoPage() {
   const router = useRouter();
-  const { setCustomerInfo } = useBookingStore();
+  const { customerInfo, setCustomerInfo } = useBookingStore();
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
@@ -33,7 +33,7 @@ export default function InfoPage() {
       </div>
 
       <div className="mt-8 max-w-2xl">
-        <CustomerForm onSubmit={handleSubmit} />
+        <CustomerForm onSubmit={handleSubmit} defaultValues={customerInfo ?? undefined} />
       </div>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
