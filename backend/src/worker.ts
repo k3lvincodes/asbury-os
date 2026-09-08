@@ -71,23 +71,8 @@ app.use('*', logger());
 app.route('/api/v1', bookings);
 app.route('/api/v1/availability', availability);
 app.route('/api/v1/payments', payments);
-app.route('/api/v1', agreements);
 
-// Webhook routes (no auth)
-app.route('/api/v1/webhooks', webhooks);
-
-// Auth routes (public — signup/login)
-app.route('/api/v1', auth);
-
-// Protected admin routes (require auth)
-app.use('/api/v1/admin/*', requireAuth);
-app.route('/api/v1/admin', admin);
-app.route('/api/v1/admin', charges);
-app.route('/api/v1/admin', notifications);
-app.route('/api/v1/admin', customers);
-app.route('/api/v1/admin', settings);
-
-// Public pricing endpoint (no auth)
+// Public pricing endpoint (must be before agreements catch-all)
 app.get('/api/v1/pricing', async (c) => {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return c.json({ success: false, error: 'Supabase not configured' }, 500);
@@ -119,6 +104,22 @@ app.get('/api/v1/pricing', async (c) => {
 
   return c.json({ success: true, data: result });
 });
+
+app.route('/api/v1', agreements);
+
+// Webhook routes (no auth)
+app.route('/api/v1/webhooks', webhooks);
+
+// Auth routes (public — signup/login)
+app.route('/api/v1', auth);
+
+// Protected admin routes (require auth)
+app.use('/api/v1/admin/*', requireAuth);
+app.route('/api/v1/admin', admin);
+app.route('/api/v1/admin', charges);
+app.route('/api/v1/admin', notifications);
+app.route('/api/v1/admin', customers);
+app.route('/api/v1/admin', settings);
 
 // Health check
 app.get('/', (c) => {
