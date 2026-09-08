@@ -269,7 +269,7 @@ payments.post('/verify', async (c) => {
           supabase,
           resend,
           twilioClient,
-          'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
+          c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
           c.env.TWILIO_PHONE_NUMBER || null,
           fullReservation.id,
           customer.email,

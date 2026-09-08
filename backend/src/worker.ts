@@ -27,6 +27,7 @@ export interface Env {
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
   RESEND_API_KEY: string;
+  EMAIL_FROM: string;
   TWILIO_ACCOUNT_SID: string;
   TWILIO_AUTH_TOKEN: string;
   TWILIO_PHONE_NUMBER: string;
@@ -51,6 +52,7 @@ app.use('*', async (c, next) => {
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
     RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+    EMAIL_FROM: process.env.EMAIL_FROM || '',
     TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
     TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || '',
