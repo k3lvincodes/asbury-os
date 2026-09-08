@@ -94,7 +94,7 @@ agreements.get('/', async (c) => {
 });
 
 // Get specific agreement version
-agreements.get('/:version', async (c) => {
+agreements.get('/versions/:version', async (c) => {
   const version = c.req.param('version');
   return c.json({
     success: true,

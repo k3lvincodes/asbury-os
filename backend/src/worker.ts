@@ -73,7 +73,7 @@ app.route('/api/v1/availability', availability);
 app.route('/api/v1/payments', payments);
 
 // Public pricing endpoint (must be before agreements catch-all)
-app.get('/api/v1/pricing-config', async (c) => {
+app.get('/api/v1/pricing', async (c) => {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return c.json({ success: false, error: 'Supabase not configured' }, 500);
   }

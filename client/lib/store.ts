@@ -72,7 +72,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   pricingLoaded: false,
   fetchPricing: async () => {
     try {
-      const res = await apiGet<Pricing>('/api/v1/pricing-config');
+      const res = await apiGet<Pricing>('/api/v1/pricing');
       if (res.success && res.data) {
         set({ pricing: { ...DEFAULT_PRICING, ...res.data }, pricingLoaded: true });
       } else {
