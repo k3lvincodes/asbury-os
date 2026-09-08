@@ -22,7 +22,7 @@ interface AvailabilityResponse {
 
 export default function HomePage() {
   const router = useRouter();
-  const { selectedPackage, setSelectedPackage, setCustomDays, setStartDate, setEndDate } = useBookingStore();
+  const { selectedPackage, setSelectedPackage, setCustomDays, setStartDate, setEndDate, pricing, fetchPricing } = useBookingStore();
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [modalRange, setModalRange] = useState<DateRange | undefined>(undefined);
   const [bookedDates, setBookedDates] = useState<string[]>([]);
@@ -32,6 +32,10 @@ export default function HomePage() {
       status: idx === 0 ? 'current' as const : 'upcoming' as const,
     }))
   );
+
+  useEffect(() => {
+    fetchPricing();
+  }, [fetchPricing]);
 
   useEffect(() => {
     async function fetchAvailability() {
@@ -78,7 +82,7 @@ export default function HomePage() {
   };
 
   const modalDays = modalRange?.from && modalRange.to ? getDaysBetween(modalRange.from, modalRange.to) : 0;
-  const modalPriceCents = calculateCustomPrice(modalDays);
+  const modalPriceCents = calculateCustomPrice(modalDays, pricing.package_24h_price, pricing.extra_day_price);
 
   const handleContinue = () => {
     if (selectedPackage) {
@@ -96,18 +100,21 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {PACKAGES.map((pkg) => (
-          <PackageCard
-            key={pkg.slug}
-            name={pkg.name}
-            slug={pkg.slug}
-            durationHours={pkg.durationHours}
-            basePriceCents={pkg.basePriceCents}
-            description={pkg.description}
-            isSelected={selectedPackage === pkg.slug}
-            onSelect={setSelectedPackage}
-          />
-        ))}
+        {PACKAGES.map((pkg) => {
+          const priceKey = `package_${pkg.slug}_price` as keyof typeof pricing;
+          return (
+            <PackageCard
+              key={pkg.slug}
+              name={pkg.name}
+              slug={pkg.slug}
+              durationHours={pkg.durationHours}
+              basePriceCents={pricing[priceKey] ?? pkg.basePriceCents}
+              description={pkg.description}
+              isSelected={selectedPackage === pkg.slug}
+              onSelect={setSelectedPackage}
+            />
+          );
+        })}
 
         {/* Custom Duration Card */}
         <div

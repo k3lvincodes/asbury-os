@@ -28,7 +28,7 @@ interface CheckResponse {
 
 export default function DatesPage() {
   const router = useRouter();
-  const { startDate, endDate, setStartDate, setEndDate, selectedPackage, customDays } = useBookingStore();
+  const { startDate, endDate, setStartDate, setEndDate, selectedPackage, customDays, pricing } = useBookingStore();
   const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
@@ -157,7 +157,7 @@ export default function DatesPage() {
   };
 
   const customPriceCents = startDate && endDate
-    ? calculateCustomPrice(getDaysBetween(startDate, endDate))
+    ? calculateCustomPrice(getDaysBetween(startDate, endDate), pricing.package_24h_price, pricing.extra_day_price)
     : 0;
 
   const packageName = selectedPackage === '24h' ? '24 Hours'

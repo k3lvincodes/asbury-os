@@ -8,7 +8,7 @@ import BookingSummary from '@/components/booking/BookingSummary';
 import { BOOKING_STEPS, PACKAGES } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
 import { apiPost } from '@/lib/api';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, calculateCustomPrice } from '@/lib/utils';
 
 interface CheckoutResponse {
   sessionId: string;
@@ -18,7 +18,7 @@ interface CheckoutResponse {
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { selectedPackage, customDays, startDate, endDate, customerInfo, setBookingNumber, agreementSignature } = useBookingStore();
+  const { selectedPackage, customDays, startDate, endDate, customerInfo, setBookingNumber, agreementSignature, pricing } = useBookingStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [steps] = useState(
@@ -33,9 +33,14 @@ export default function PaymentPage() {
         name: `Custom (${customDays} days)`,
         slug: 'custom',
         durationHours: customDays ? customDays * 24 : 24,
-        basePriceCents: customDays ? 22500 + (customDays - 1) * 7500 : 22500,
+        basePriceCents: customDays ? calculateCustomPrice(customDays, pricing.package_24h_price, pricing.extra_day_price) : pricing.package_24h_price,
       }
-    : PACKAGES.find((p) => p.slug === selectedPackage);
+    : (() => {
+        const pkg = PACKAGES.find((p) => p.slug === selectedPackage);
+        if (!pkg) return null;
+        const priceKey = `package_${pkg.slug}_price` as keyof typeof pricing;
+        return { ...pkg, basePriceCents: pricing[priceKey] ?? pkg.basePriceCents };
+      })();
 
   if (!packageData || !startDate || !endDate || !customerInfo) {
     return (

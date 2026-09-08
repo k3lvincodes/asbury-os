@@ -46,7 +46,9 @@ export function getDaysBetween(start: Date, end: Date): number {
 const CUSTOM_BASE_PRICE_CENTS = 22500;
 const CUSTOM_EXTRA_DAY_PRICE_CENTS = 7500;
 
-export function calculateCustomPrice(days: number): number {
+export function calculateCustomPrice(days: number, basePrice?: number, extraDayPrice?: number): number {
   if (days <= 0) return 0;
-  return CUSTOM_BASE_PRICE_CENTS + (days - 1) * CUSTOM_EXTRA_DAY_PRICE_CENTS;
+  const base = basePrice ?? CUSTOM_BASE_PRICE_CENTS;
+  const extra = extraDayPrice ?? CUSTOM_EXTRA_DAY_PRICE_CENTS;
+  return base + (days - 1) * extra;
 }

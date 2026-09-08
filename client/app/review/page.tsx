@@ -11,7 +11,7 @@ import { getDaysBetween, calculateCustomPrice } from '@/lib/utils';
 
 export default function ReviewPage() {
   const router = useRouter();
-  const { selectedPackage, startDate, endDate, customerInfo, customDays } = useBookingStore();
+  const { selectedPackage, startDate, endDate, customerInfo, customDays, pricing } = useBookingStore();
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
@@ -24,7 +24,7 @@ export default function ReviewPage() {
         name: `Custom (${customDays} days)`,
         slug: 'custom',
         durationHours: customDays ? customDays * 24 : 24,
-        basePriceCents: calculateCustomPrice(customDays ?? 0),
+        basePriceCents: calculateCustomPrice(customDays ?? 0, pricing.package_24h_price, pricing.extra_day_price),
       }
     : PACKAGES.find((p) => p.slug === selectedPackage);
 

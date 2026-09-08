@@ -87,6 +87,39 @@ app.route('/api/v1/admin', notifications);
 app.route('/api/v1/admin', customers);
 app.route('/api/v1/admin', settings);
 
+// Public pricing endpoint (no auth)
+app.get('/api/v1/pricing', async (c) => {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return c.json({ success: false, error: 'Supabase not configured' }, 500);
+  }
+
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+  const pricingKeys = [
+    'package_24h_price', 'package_3d_price', 'package_7d_price',
+    'extra_day_price', 'extra_mile_price', 'overweight_per_ton',
+    'failed_pickup_fee', 'cleaning_fee_max', 'included_miles',
+    'booking_hold_minutes',
+  ];
+
+  const { data, error } = await supabase
+    .from('settings')
+    .select('key, value')
+    .in('key', pricingKeys);
+
+  if (error) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+
+  const result: Record<string, number> = {};
+  (data ?? []).forEach((row: any) => {
+    result[row.key] = row.value;
+  });
+
+  return c.json({ success: true, data: result });
+});
+
 // Health check
 app.get('/', (c) => {
   return c.json({ message: 'Asbury Outdoor Services API' });
