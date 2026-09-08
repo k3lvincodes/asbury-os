@@ -28,7 +28,12 @@ export default function ReviewPage() {
         durationHours: customDays ? customDays * 24 : 24,
         basePriceCents: calculateCustomPrice(customDays ?? 0, pricing.package_24h_price, pricing.extra_day_price),
       }
-    : PACKAGES.find((p) => p.slug === selectedPackage);
+    : (() => {
+        const pkg = PACKAGES.find((p) => p.slug === selectedPackage);
+        if (!pkg) return null;
+        const priceKey = `package_${pkg.slug}_price` as keyof typeof pricing;
+        return { ...pkg, basePriceCents: pricing[priceKey] ?? pkg.basePriceCents };
+      })();
 
   if (!packageData || !startDate || !endDate || !customerInfo) {
     return (
