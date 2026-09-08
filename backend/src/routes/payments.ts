@@ -186,6 +186,16 @@ payments.post('/create-checkout', async (c) => {
       c.env.CLIENT_URL
     );
 
+    // 6. Save Stripe session ID to payments table for later lookup
+    await supabase.from('payments').insert({
+      reservation_id: newReservation.id,
+      stripe_session_id: session.sessionId,
+      amount_cents: amountCents,
+      currency: 'usd',
+      status: 'pending',
+      payment_type: 'booking',
+    });
+
     return c.json({
       success: true,
       data: session,
@@ -234,18 +244,22 @@ payments.post('/verify', async (c) => {
       return c.json({ success: true, data: { status: 'confirmed', paymentStatus: 'paid' } });
     }
 
-    // Search Stripe for a checkout session matching this booking number
-    const sessions = await stripe.checkout.sessions.list({
-      limit: 5,
-    });
+    // Look up Stripe session ID from payments table
+    const { data: paymentRecord } = await supabase
+      .from('payments')
+      .select('stripe_session_id')
+      .eq('reservation_id', reservation.id)
+      .eq('payment_type', 'booking')
+      .not('stripe_session_id', 'is', null)
+      .limit(1)
+      .single();
 
-    const session = sessions.data.find(
-      (s) => s.metadata?.bookingNumber === bookingNumber || s.client_reference_id === bookingNumber
-    );
-
-    if (!session) {
+    if (!paymentRecord?.stripe_session_id) {
       return c.json({ success: false, error: 'No Stripe session found for this booking' }, 404);
     }
+
+    // Retrieve the specific session directly
+    const session = await stripe.checkout.sessions.retrieve(paymentRecord.stripe_session_id);
 
     if (session.payment_status === 'paid') {
       await supabase
@@ -290,7 +304,8 @@ payments.post('/verify', async (c) => {
             endDate: fullReservation.rental_end_date,
             amountDue: fullReservation.amount_due_cents,
             deliveryAddress: fullReservation.delivery_address,
-          }
+          },
+          c.env.ADMIN_EMAIL || null
         );
       }
 

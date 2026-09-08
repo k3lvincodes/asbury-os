@@ -85,7 +85,8 @@ webhooks.post('/stripe', async (c) => {
               endDate: fullReservation.rental_end_date,
               amountDue: fullReservation.amount_due_cents,
               deliveryAddress: fullReservation.delivery_address,
-            }
+            },
+            c.env.ADMIN_EMAIL || null
           );
         }
       }

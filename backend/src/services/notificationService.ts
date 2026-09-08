@@ -30,7 +30,8 @@ export async function sendReservationConfirmed(
     endDate: string;
     amountDue: number;
     deliveryAddress: string;
-  }
+  },
+  adminEmail?: string | null
 ) {
   const formattedTotal = `$${(bookingData.amountDue / 100).toFixed(2)}`;
   const formattedStart = new Date(bookingData.startDate).toLocaleDateString('en-US', {
@@ -227,6 +228,46 @@ export async function sendReservationConfirmed(
         recipient: adminPhone,
         status: 'failed',
         metadata: { error: smsError instanceof Error ? smsError.message : 'Unknown error' },
+      });
+    }
+  }
+
+  // Admin email notification
+  if (adminEmail) {
+    try {
+      await resend.emails.send({
+        from: fromEmail,
+        to: adminEmail,
+        subject: `New Reservation - ${bookingData.bookingNumber}`,
+        html: `
+          <h2>New Reservation Confirmed</h2>
+          <p><strong>Booking:</strong> ${bookingData.bookingNumber}</p>
+          <p><strong>Package:</strong> ${bookingData.packageName}</p>
+          <p><strong>Customer:</strong> ${customerEmail}</p>
+          <p><strong>Dates:</strong> ${formattedStart} - ${formattedEnd}</p>
+          <p><strong>Total:</strong> ${formattedTotal}</p>
+          <p><strong>Delivery:</strong> ${bookingData.deliveryAddress}</p>
+        `,
+      });
+
+      await logNotification(supabase, {
+        reservationId,
+        type: 'email',
+        template: 'reservation_confirmed_admin',
+        recipient: adminEmail,
+        subject: `New Reservation - ${bookingData.bookingNumber}`,
+        status: 'sent',
+      });
+    } catch (emailError) {
+      console.error('Failed to send admin notification email:', emailError);
+      await logNotification(supabase, {
+        reservationId,
+        type: 'email',
+        template: 'reservation_confirmed_admin',
+        recipient: adminEmail,
+        subject: `New Reservation - ${bookingData.bookingNumber}`,
+        status: 'failed',
+        metadata: { error: emailError instanceof Error ? emailError.message : 'Unknown error' },
       });
     }
   }
