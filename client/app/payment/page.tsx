@@ -18,7 +18,7 @@ interface CheckoutResponse {
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { selectedPackage, customDays, startDate, endDate, customerInfo, setBookingNumber } = useBookingStore();
+  const { selectedPackage, customDays, startDate, endDate, customerInfo, setBookingNumber, agreementSignature } = useBookingStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [steps] = useState(
@@ -66,6 +66,7 @@ export default function PaymentPage() {
         packageSlug: selectedPackage,
         rentalStartDate: startDate.toISOString().split('T')[0],
         rentalEndDate: endDate.toISOString().split('T')[0],
+        signatureData: agreementSignature || '',
       });
 
       if (res.success && res.data?.url) {

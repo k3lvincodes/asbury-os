@@ -19,6 +19,7 @@ payments.post('/create-checkout', async (c) => {
     packageSlug?: string;
     rentalStartDate?: string;
     rentalEndDate?: string;
+    signatureData?: string;
   }>();
 
   const amountCents = Number(body?.amountCents);
@@ -102,7 +103,7 @@ payments.post('/create-checkout', async (c) => {
     }
 
     // 4. Create reservation
-    const { error: reservationError } = await supabase
+    const { data: newReservation, error: reservationError } = await supabase
       .from('reservations')
       .insert({
         booking_number: bookingNumber,
@@ -118,10 +119,34 @@ payments.post('/create-checkout', async (c) => {
         booking_status: 'awaiting_payment',
         payment_status: 'pending',
         agreement_status: 'signed',
-      });
+      })
+      .select('id')
+      .single();
 
     if (reservationError) {
       return c.json({ success: false, error: `Failed to create reservation: ${reservationError.message}` }, 500);
+    }
+
+    // 5. Save signed agreement if signature was provided
+    if (body.signatureData && newReservation) {
+      const { data: activeAgreement } = await supabase
+        .from('agreements')
+        .select('id')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (activeAgreement) {
+        await supabase.from('signed_agreements').insert({
+          reservation_id: newReservation.id,
+          agreement_id: activeAgreement.id,
+          customer_name: body.customerName || '',
+          signature_data: body.signatureData,
+          accepted_at: new Date().toISOString(),
+          ip_address: c.req.header('x-forwarded-for') || '',
+        });
+      }
     }
 
     // 5. Create Stripe session with booking number in success URL

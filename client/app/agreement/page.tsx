@@ -18,7 +18,7 @@ interface AgreementData {
 
 export default function AgreementPage() {
   const router = useRouter();
-  const { setAgreementSigned } = useBookingStore();
+  const { setAgreementSigned, setAgreementSignature } = useBookingStore();
   const [signature, setSignature] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [agreement, setAgreement] = useState<AgreementData | null>(null);
@@ -52,6 +52,7 @@ export default function AgreementPage() {
   const handleContinue = () => {
     if (signature && accepted) {
       setAgreementSigned(true);
+      setAgreementSignature(signature);
       router.push('/payment');
     }
   };

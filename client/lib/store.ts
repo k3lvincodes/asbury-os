@@ -29,6 +29,8 @@ interface BookingState {
   // Agreement
   agreementSigned: boolean;
   setAgreementSigned: (signed: boolean) => void;
+  agreementSignature: string | null;
+  setAgreementSignature: (sig: string | null) => void;
 
   // Reset
   reset: () => void;
@@ -58,6 +60,8 @@ export const useBookingStore = create<BookingState>((set) => ({
   // Agreement
   agreementSigned: false,
   setAgreementSigned: (signed) => set({ agreementSigned: signed }),
+  agreementSignature: null,
+  setAgreementSignature: (sig) => set({ agreementSignature: sig }),
 
   // Reset
   reset: () =>
@@ -69,5 +73,6 @@ export const useBookingStore = create<BookingState>((set) => ({
       customerInfo: null,
       bookingNumber: null,
       agreementSigned: false,
+      agreementSignature: null,
     }),
 }));
