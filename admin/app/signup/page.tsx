@@ -42,7 +42,7 @@ export default function SignupPage() {
         />
       </div>
 
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg sm:p-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-navy">Create Admin Account</h1>
           <p className="mt-2 text-sm text-gray-600">

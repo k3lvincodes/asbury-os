@@ -55,6 +55,7 @@ export default function CalendarPage() {
   const [selectedDay, setSelectedDay] = useState<{ day: number; bookings: BookingEvent[] } | null>(null);
   const [bookings, setBookings] = useState<BookingEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     async function fetchBookings() {
@@ -119,20 +120,20 @@ export default function CalendarPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(false)} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <AdminHeader />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center justify-between">
+        <AdminHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-2xl font-semibold text-navy">Calendar</h1>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <button
                 onClick={prevMonth}
                 className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 ← Prev
               </button>
-              <span className="text-lg font-semibold text-navy">
+              <span className="text-sm font-semibold text-navy sm:text-lg">
                 {MONTHS[currentMonth]} {currentYear}
               </span>
               <button
@@ -166,99 +167,105 @@ export default function CalendarPage() {
           {!loading && (
             <>
               <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-                <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
-                  {DAYS.map((day) => (
-                    <div key={day} className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      {day}
+                <div className="overflow-x-auto">
+                  <div className="min-w-[600px]">
+                    <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
+                      {DAYS.map((day) => (
+                        <div key={day} className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                          {day}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7">
-                  {calendarDays.map((day, idx) => {
-                    const dayBookings = day ? getBookingsForDay(day) : [];
-                    const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+                    <div className="grid grid-cols-7">
+                      {calendarDays.map((day, idx) => {
+                        const dayBookings = day ? getBookingsForDay(day) : [];
+                        const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => day && handleDayClick(day)}
-                        className={`min-h-[100px] border-b border-r border-gray-100 p-1.5 ${
-                          day ? 'cursor-pointer bg-white hover:bg-gray-50' : 'bg-gray-50'
-                        }`}
-                      >
-                        {day && (
-                          <>
-                            <span
-                              className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
-                                isToday ? 'bg-forest text-white' : 'text-gray-700'
-                              }`}
-                            >
-                              {day}
-                            </span>
-                            <div className="mt-1 space-y-0.5">
-                              {dayBookings.map((booking) => (
-                                <div
-                                  key={booking.id}
-                                  className={`w-full truncate rounded px-1.5 py-0.5 text-[10px] font-medium leading-tight ${
-                                    statusColors[booking.status] || 'bg-gray-100 text-gray-600'
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => day && handleDayClick(day)}
+                            className={`min-h-[60px] border-b border-r border-gray-100 p-1 sm:min-h-[100px] sm:p-1.5 ${
+                              day ? 'cursor-pointer bg-white hover:bg-gray-50' : 'bg-gray-50'
+                            }`}
+                          >
+                            {day && (
+                              <>
+                                <span
+                                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+                                    isToday ? 'bg-forest text-white' : 'text-gray-700'
                                   }`}
-                                  title={`${booking.bookingNumber} - ${booking.customerName}`}
                                 >
-                                  {booking.customerName}
+                                  {day}
+                                </span>
+                                <div className="mt-1 space-y-0.5">
+                                  {dayBookings.map((booking) => (
+                                    <div
+                                      key={booking.id}
+                                      className={`w-full truncate rounded px-1.5 py-0.5 text-[10px] font-medium leading-tight ${
+                                        statusColors[booking.status] || 'bg-gray-100 text-gray-600'
+                                      }`}
+                                      title={`${booking.bookingNumber} - ${booking.customerName}`}
+                                    >
+                                      {booking.customerName}
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="mt-8">
                 <h2 className="text-lg font-semibold text-navy">All Bookings This Month</h2>
                 <div className="mt-4 overflow-hidden bg-white shadow sm:rounded-lg">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Booking #</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Dates</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
-                      {bookings.length === 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
                         <tr>
-                          <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
-                            No bookings this month
-                          </td>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6">Booking #</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6">Customer</th>
+                          <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6">Dates</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6">Status</th>
                         </tr>
-                      ) : (
-                        bookings.map((booking) => (
-                          <tr key={booking.id}>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-forest">{booking.bookingNumber}</td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{booking.customerName}</td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{booking.startDate} → {booking.endDate}</td>
-                            <td className="whitespace-nowrap px-6 py-4">
-                              <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${statusBadgeColors[booking.status] || 'bg-gray-100 text-gray-800'}`}>
-                                {booking.status}
-                              </span>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {bookings.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
+                              No bookings this month
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          bookings.map((booking) => (
+                            <tr key={booking.id}>
+                              <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-forest sm:px-6">{booking.bookingNumber}</td>
+                              <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-900 sm:px-6">{booking.customerName}</td>
+                              <td className="hidden whitespace-nowrap px-4 py-4 text-sm text-gray-500 sm:table-cell sm:px-6">{booking.startDate} → {booking.endDate}</td>
+                              <td className="whitespace-nowrap px-4 py-4 sm:px-6">
+                                <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${statusBadgeColors[booking.status] || 'bg-gray-100 text-gray-800'}`}>
+                                  {booking.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </>
           )}
 
           {selectedDay && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-              <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="w-full max-w-lg rounded-lg bg-white p-4 sm:p-6 shadow-xl">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-navy">
                     {MONTHS[currentMonth]} {selectedDay.day}, {currentYear}

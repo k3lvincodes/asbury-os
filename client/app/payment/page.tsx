@@ -130,7 +130,7 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      <div className="mt-8 flex justify-between">
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
         <button
           onClick={() => router.push('/agreement')}
           className="rounded-md border border-gray-300 bg-white px-6 py-3 text-gray-700 font-medium hover:bg-gray-50"

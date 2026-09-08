@@ -63,7 +63,7 @@ function ConfirmationContent() {
           </p>
         </div>
 
-        <div className="mt-8 flex justify-center space-x-4">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             onClick={() => router.push('/')}
             className="rounded-md border border-gray-300 bg-white px-6 py-3 text-gray-700 font-medium hover:bg-gray-50"

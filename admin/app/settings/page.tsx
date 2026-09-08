@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     async function fetchSettings() {
@@ -65,10 +66,10 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex h-screen bg-gray-50 overflow-hidden">
-        <Sidebar />
+        <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(false)} />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <AdminHeader />
-          <main className="flex-1 overflow-y-auto p-6">
+          <AdminHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6">
             <div className="text-sm text-gray-500">Loading settings...</div>
           </main>
         </div>
@@ -78,11 +79,11 @@ export default function SettingsPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(false)} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <AdminHeader />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center justify-between">
+        <AdminHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-2xl font-semibold text-navy">Settings</h1>
             <button
               onClick={handleSave}
@@ -117,7 +118,7 @@ export default function SettingsPage() {
                         type="number"
                         value={settings[key] !== undefined ? (settings[key] / 100).toFixed(2) : '0.00'}
                         onChange={(e) => handleChange(key, String(Math.round(parseFloat(e.target.value) * 100)))}
-                        className="block w-32 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
+                        className="block w-full max-w-[160px] rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
                       />
                       {settings[key] !== undefined && (
                         <span className="text-sm text-gray-500">({formatCurrency(settings[key])})</span>
@@ -147,7 +148,7 @@ export default function SettingsPage() {
                         type="number"
                         value={settings[key] !== undefined ? (settings[key] / 100).toFixed(2) : '0.00'}
                         onChange={(e) => handleChange(key, String(Math.round(parseFloat(e.target.value) * 100)))}
-                        className="block w-32 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
+                        className="block w-full max-w-[160px] rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
                       />
                     </div>
                   </div>
