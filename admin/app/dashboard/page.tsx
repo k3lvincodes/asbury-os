@@ -20,7 +20,7 @@ interface Booking {
   customerName: string;
   packageName: string;
   startDate: string;
-  amountDue: number;
+  amountDueCents: number;
   status: string;
 }
 

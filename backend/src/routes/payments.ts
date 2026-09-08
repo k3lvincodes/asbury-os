@@ -4,6 +4,7 @@ import { createStripeClient } from '../config/stripe';
 import { createSupabaseServiceClient } from '../config/supabase';
 import { createCheckoutSession } from '../services/paymentService';
 import { generateBookingNumber } from '../services/idGenerator';
+import { sendReservationConfirmed } from '../services/notificationService';
 
 const payments = new Hono<{ Bindings: Env }>();
 
@@ -205,6 +206,43 @@ payments.post('/verify', async (c) => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', reservation.id);
+
+      // Fetch full reservation data for notification
+      const { data: fullReservation } = await supabase
+        .from('reservations')
+        .select('id, booking_number, rental_start_date, rental_end_date, delivery_address, amount_due_cents, customer:customers(full_name, email, phone), package:rental_packages(name)')
+        .eq('id', reservation.id)
+        .single();
+
+      if (fullReservation) {
+        const customer = fullReservation.customer as any;
+        const pkg = fullReservation.package as any;
+        const { Resend } = await import('resend');
+        const resend = new Resend(c.env.RESEND_API_KEY);
+        const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
+          ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
+          : null;
+
+        await sendReservationConfirmed(
+          supabase,
+          resend,
+          twilioClient,
+          'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
+          c.env.TWILIO_PHONE_NUMBER || null,
+          fullReservation.id,
+          customer.email,
+          customer.phone,
+          c.env.ADMIN_PHONE_NUMBER || null,
+          {
+            bookingNumber: fullReservation.booking_number,
+            packageName: pkg.name,
+            startDate: fullReservation.rental_start_date,
+            endDate: fullReservation.rental_end_date,
+            amountDue: fullReservation.amount_due_cents,
+            deliveryAddress: fullReservation.delivery_address,
+          }
+        );
+      }
 
       return c.json({ success: true, data: { status: 'confirmed', paymentStatus: 'paid' } });
     }

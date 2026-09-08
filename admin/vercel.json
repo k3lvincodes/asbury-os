@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://asbury-backend.onrender.com/api/:path*"
+      "destination": "https://api.asburyoutdoorservices.com/api/:path*"
     }
   ]
 }

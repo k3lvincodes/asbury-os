@@ -30,6 +30,7 @@ export interface Env {
   TWILIO_ACCOUNT_SID: string;
   TWILIO_AUTH_TOKEN: string;
   TWILIO_PHONE_NUMBER: string;
+  ADMIN_PHONE_NUMBER: string;
   JWT_SECRET: string;
   ENVIRONMENT: string;
 }
@@ -53,6 +54,7 @@ app.use('*', async (c, next) => {
     TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
     TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || '',
+    ADMIN_PHONE_NUMBER: process.env.ADMIN_PHONE_NUMBER || '',
     JWT_SECRET: process.env.JWT_SECRET || '',
     ENVIRONMENT: process.env.NODE_ENV || 'development',
   } as Env;
