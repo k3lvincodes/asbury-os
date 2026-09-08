@@ -22,7 +22,7 @@ interface AvailabilityResponse {
 
 export default function HomePage() {
   const router = useRouter();
-  const { selectedPackage, setSelectedPackage, setCustomDays, setStartDate, setEndDate, pricing, fetchPricing } = useBookingStore();
+  const { selectedPackage, setSelectedPackage, setCustomDays, setStartDate, setEndDate, pricing, pricingLoaded, fetchPricing } = useBookingStore();
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [modalRange, setModalRange] = useState<DateRange | undefined>(undefined);
   const [bookedDates, setBookedDates] = useState<string[]>([]);
@@ -100,55 +100,68 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {PACKAGES.map((pkg) => {
-          const priceKey = `package_${pkg.slug}_price` as keyof typeof pricing;
-          return (
-            <PackageCard
-              key={pkg.slug}
-              name={pkg.name}
-              slug={pkg.slug}
-              durationHours={pkg.durationHours}
-              basePriceCents={pricing[priceKey] ?? pkg.basePriceCents}
-              description={pkg.description}
-              isSelected={selectedPackage === pkg.slug}
-              onSelect={setSelectedPackage}
-            />
-          );
-        })}
-
-        {/* Custom Duration Card */}
-        <div
-          className={cn(
-            'relative rounded-lg border-2 p-6 cursor-pointer transition-all',
-            selectedPackage === 'custom'
-              ? 'border-forest bg-forest-light'
-              : 'border-gray-200 hover:border-gray-300'
-          )}
-          onClick={handleCustomCardClick}
-        >
-          {selectedPackage === 'custom' && (
-            <div className="absolute top-2 right-2">
-              <svg
-                className="h-6 w-6 text-forest"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+        {!pricingLoaded ? (
+          // Loading skeletons
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border-2 border-gray-200 p-6 animate-pulse">
+              <div className="h-5 w-24 bg-gray-200 rounded" />
+              <div className="mt-2 h-4 w-36 bg-gray-200 rounded" />
+              <div className="mt-4 h-8 w-20 bg-gray-200 rounded" />
             </div>
-          )}
-          <h3 className="text-xl font-semibold text-navy">Custom</h3>
-          <p className="mt-2 text-sm text-gray-600">Choose your own rental duration</p>
-          <div className="mt-4">
-            <span className="text-lg font-semibold text-navy">Select Dates</span>
-          </div>
-        </div>
+          ))
+        ) : (
+          <>
+            {PACKAGES.map((pkg) => {
+              const priceKey = `package_${pkg.slug}_price` as keyof typeof pricing;
+              return (
+                <PackageCard
+                  key={pkg.slug}
+                  name={pkg.name}
+                  slug={pkg.slug}
+                  durationHours={pkg.durationHours}
+                  basePriceCents={pricing[priceKey] ?? pkg.basePriceCents}
+                  description={pkg.description}
+                  isSelected={selectedPackage === pkg.slug}
+                  onSelect={setSelectedPackage}
+                />
+              );
+            })}
+
+            {/* Custom Duration Card */}
+            <div
+              className={cn(
+                'relative rounded-lg border-2 p-6 cursor-pointer transition-all',
+                selectedPackage === 'custom'
+                  ? 'border-forest bg-forest-light'
+                  : 'border-gray-200 hover:border-gray-300'
+              )}
+              onClick={handleCustomCardClick}
+            >
+              {selectedPackage === 'custom' && (
+                <div className="absolute top-2 right-2">
+                  <svg
+                    className="h-6 w-6 text-forest"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              )}
+              <h3 className="text-xl font-semibold text-navy">Custom</h3>
+              <p className="mt-2 text-sm text-gray-600">Choose your own rental duration</p>
+              <div className="mt-4">
+                <span className="text-lg font-semibold text-navy">Select Dates</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="mt-8 flex justify-end">

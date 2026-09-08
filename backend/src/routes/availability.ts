@@ -72,6 +72,11 @@ availability.post('/check', async (c) => {
 
   const suggestions: { startDate: string; endDate: string }[] = [];
 
+  // Helper to check if a suggested range overlaps with the originally-requested range
+  const overlapsRequested = (sugStart: string, sugEnd: string) => {
+    return sugStart <= endDate! && sugEnd >= startDate;
+  };
+
   // Check before first booking
   if (bookedRanges.length > 0) {
     const firstBooked = bookedRanges[0];
@@ -81,10 +86,14 @@ availability.post('/check', async (c) => {
     if (daysBefore >= durationDays) {
       const sugEnd = new Date(firstBooked.start);
       sugEnd.setDate(sugEnd.getDate() - 1);
-      suggestions.push({
-        startDate: today,
-        endDate: sugEnd.toISOString().split('T')[0],
-      });
+      const sugStartStr = today;
+      const sugEndStr = sugEnd.toISOString().split('T')[0];
+      if (!overlapsRequested(sugStartStr, sugEndStr)) {
+        suggestions.push({
+          startDate: sugStartStr,
+          endDate: sugEndStr,
+        });
+      }
     }
   }
 
@@ -100,10 +109,14 @@ availability.post('/check', async (c) => {
     ) + 1;
 
     if (gapDays >= durationDays) {
-      suggestions.push({
-        startDate: gapStart.toISOString().split('T')[0],
-        endDate: gapEnd.toISOString().split('T')[0],
-      });
+      const sugStartStr = gapStart.toISOString().split('T')[0];
+      const sugEndStr = gapEnd.toISOString().split('T')[0];
+      if (!overlapsRequested(sugStartStr, sugEndStr)) {
+        suggestions.push({
+          startDate: sugStartStr,
+          endDate: sugEndStr,
+        });
+      }
     }
   }
 
@@ -122,10 +135,14 @@ availability.post('/check', async (c) => {
     if (daysAfter >= durationDays) {
       const sugEnd = new Date(afterStart);
       sugEnd.setDate(sugEnd.getDate() + durationDays - 1);
-      suggestions.push({
-        startDate: afterStart.toISOString().split('T')[0],
-        endDate: sugEnd.toISOString().split('T')[0],
-      });
+      const sugStartStr = afterStart.toISOString().split('T')[0];
+      const sugEndStr = sugEnd.toISOString().split('T')[0];
+      if (!overlapsRequested(sugStartStr, sugEndStr)) {
+        suggestions.push({
+          startDate: sugStartStr,
+          endDate: sugEndStr,
+        });
+      }
     }
   }
 
