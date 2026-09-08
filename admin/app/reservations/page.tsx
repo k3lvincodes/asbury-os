@@ -70,11 +70,11 @@ export default function ReservationsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <AdminHeader />
-        <main className="flex-1 p-6">
+        <main className="flex-1 overflow-y-auto p-6">
           <h1 className="text-2xl font-semibold text-navy">Reservations</h1>
 
           <div className="mt-6">

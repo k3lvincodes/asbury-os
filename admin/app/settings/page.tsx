@@ -64,11 +64,11 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex h-screen bg-gray-50 overflow-hidden">
         <Sidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden">
           <AdminHeader />
-          <main className="flex-1 p-6">
+          <main className="flex-1 overflow-y-auto p-6">
             <div className="text-sm text-gray-500">Loading settings...</div>
           </main>
         </div>
@@ -77,11 +77,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <AdminHeader />
-        <main className="flex-1 p-6">
+        <main className="flex-1 overflow-y-auto p-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-navy">Settings</h1>
             <button
