@@ -216,12 +216,19 @@ payments.post('/verify', async (c) => {
   const body = await c.req.json<{ bookingNumber?: string }>();
   const bookingNumber = body?.bookingNumber;
 
+  console.log(`[verify] Called for booking: ${bookingNumber}`);
+
   if (!bookingNumber) {
     return c.json({ success: false, error: 'Missing bookingNumber' }, 400);
   }
 
   if (!c.env.STRIPE_SECRET_KEY) {
+    console.error('[verify] STRIPE_SECRET_KEY not configured');
     return c.json({ success: false, error: 'Stripe is not configured.' }, 500);
+  }
+
+  if (!c.env.RESEND_API_KEY) {
+    console.error('[verify] RESEND_API_KEY not configured — emails will not be sent');
   }
 
   const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
@@ -236,15 +243,20 @@ payments.post('/verify', async (c) => {
       .single();
 
     if (resError || !reservation) {
+      console.error(`[verify] Reservation not found for booking: ${bookingNumber}`);
       return c.json({ success: false, error: 'Reservation not found' }, 404);
     }
 
+    console.log(`[verify] Found reservation ${reservation.id}, payment_status: ${reservation.payment_status}`);
+
     // Already paid — nothing to do
     if (reservation.payment_status === 'paid') {
+      console.log(`[verify] Already paid, skipping`);
       return c.json({ success: true, data: { status: 'confirmed', paymentStatus: 'paid' } });
     }
 
-    // Look up Stripe session ID from payments table
+    // Look up Stripe session ID from payments table (new path)
+    let stripeSessionId: string | null = null;
     const { data: paymentRecord } = await supabase
       .from('payments')
       .select('stripe_session_id')
@@ -254,14 +266,34 @@ payments.post('/verify', async (c) => {
       .limit(1)
       .single();
 
-    if (!paymentRecord?.stripe_session_id) {
+    if (paymentRecord?.stripe_session_id) {
+      stripeSessionId = paymentRecord.stripe_session_id;
+    }
+
+    console.log(`[verify] Stripe session ID from payments table: ${stripeSessionId || '(none - using fallback)'}`);
+
+    // Retrieve session — try direct lookup first, fall back to list for old bookings
+    let session;
+    if (stripeSessionId) {
+      session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+    } else {
+      // Fallback for bookings created before payment record was stored
+      console.log(`[verify] Falling back to sessions.list() for old booking`);
+      const sessions = await stripe.checkout.sessions.list({ limit: 100 });
+      session = sessions.data.find(
+        (s) => s.metadata?.bookingNumber === bookingNumber || s.client_reference_id === bookingNumber
+      );
+    }
+
+    if (!session) {
+      console.error(`[verify] No Stripe session found for booking: ${bookingNumber}`);
       return c.json({ success: false, error: 'No Stripe session found for this booking' }, 404);
     }
 
-    // Retrieve the specific session directly
-    const session = await stripe.checkout.sessions.retrieve(paymentRecord.stripe_session_id);
+    console.log(`[verify] Stripe session ${session.id}, payment_status: ${session.payment_status}`);
 
     if (session.payment_status === 'paid') {
+      console.log(`[verify] Payment confirmed — updating reservation and sending notifications`);
       await supabase
         .from('reservations')
         .update({
@@ -281,32 +313,38 @@ payments.post('/verify', async (c) => {
       if (fullReservation) {
         const customer = fullReservation.customer as any;
         const pkg = fullReservation.package as any;
+        console.log(`[verify] Sending notification to ${customer.email} for booking ${fullReservation.booking_number}`);
         const { Resend } = await import('resend');
         const resend = new Resend(c.env.RESEND_API_KEY);
         const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
           ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
           : null;
 
-        await sendReservationConfirmed(
-          supabase,
-          resend,
-          twilioClient,
-          c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
-          c.env.TWILIO_PHONE_NUMBER || null,
-          fullReservation.id,
-          customer.email,
-          customer.phone,
-          c.env.ADMIN_PHONE_NUMBER || null,
-          {
-            bookingNumber: fullReservation.booking_number,
-            packageName: pkg.name,
-            startDate: fullReservation.rental_start_date,
-            endDate: fullReservation.rental_end_date,
-            amountDue: fullReservation.amount_due_cents,
-            deliveryAddress: fullReservation.delivery_address,
-          },
-          c.env.ADMIN_EMAIL || null
-        );
+        try {
+          await sendReservationConfirmed(
+            supabase,
+            resend,
+            twilioClient,
+            c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
+            c.env.TWILIO_PHONE_NUMBER || null,
+            fullReservation.id,
+            customer.email,
+            customer.phone,
+            c.env.ADMIN_PHONE_NUMBER || null,
+            {
+              bookingNumber: fullReservation.booking_number,
+              packageName: pkg.name,
+              startDate: fullReservation.rental_start_date,
+              endDate: fullReservation.rental_end_date,
+              amountDue: fullReservation.amount_due_cents,
+              deliveryAddress: fullReservation.delivery_address,
+            },
+            c.env.ADMIN_EMAIL || null
+          );
+          console.log(`[verify] Notifications sent successfully`);
+        } catch (notifError) {
+          console.error(`[verify] Failed to send notifications:`, notifError);
+        }
       }
 
       return c.json({ success: true, data: { status: 'confirmed', paymentStatus: 'paid' } });

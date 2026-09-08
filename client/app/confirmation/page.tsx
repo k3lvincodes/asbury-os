@@ -13,10 +13,32 @@ function ConfirmationContent() {
   const bookingNumber = searchParams.get('booking') || storeBookingNumber;
 
   useEffect(() => {
-    if (bookingNumber) {
-      apiPost('/api/v1/payments/verify', { bookingNumber }).catch(() => {});
-      reset();
+    if (!bookingNumber) return;
+
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    async function verify() {
+      try {
+        const res = await apiPost<{ status: string; paymentStatus: string }>(
+          '/api/v1/payments/verify',
+          { bookingNumber }
+        );
+        if (res.success && res.data?.status === 'confirmed') {
+          return;
+        }
+      } catch {
+        // Network error — retry
+      }
+
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(verify, 2000 * attempts);
+      }
     }
+
+    verify();
+    reset();
   }, [bookingNumber, reset]);
 
   return (
