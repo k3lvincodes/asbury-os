@@ -59,6 +59,13 @@ export default function PaymentPage() {
     );
   }
 
+  const toLocalDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const handlePay = async () => {
     setIsLoading(true);
     setError(null);
@@ -71,8 +78,8 @@ export default function PaymentPage() {
         customerPhone: customerInfo.phone,
         deliveryAddress: customerInfo.deliveryAddress,
         packageSlug: selectedPackage,
-        rentalStartDate: startDate.toISOString().split('T')[0],
-        rentalEndDate: endDate.toISOString().split('T')[0],
+        rentalStartDate: toLocalDateString(startDate),
+        rentalEndDate: toLocalDateString(endDate),
         signatureData: agreementSignature || '',
       });
 
