@@ -250,7 +250,9 @@ admin.get('/calendar', async (c) => {
     const endMonth = parseInt(month) === 12 ? 1 : parseInt(month) + 1;
     const endYear = parseInt(month) === 12 ? parseInt(year) + 1 : parseInt(year);
     const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`;
-    query = query.overlaps('rental_start_date', 'rental_end_date', `[${startDate},${endDate})`);
+    query = query
+      .lte('rental_start_date', endDate)
+      .gte('rental_end_date', startDate);
   }
 
   const { data, error } = await query;
@@ -263,8 +265,8 @@ admin.get('/calendar', async (c) => {
     id: r.id,
     bookingNumber: r.booking_number,
     customerName: r.customer?.full_name ?? '',
-    startDate: r.rental_start_date,
-    endDate: r.rental_end_date,
+    startDate: String(r.rental_start_date).substring(0, 10),
+    endDate: String(r.rental_end_date).substring(0, 10),
     status: r.booking_status,
   }));
 

@@ -98,7 +98,11 @@ export default function CalendarPage() {
 
   const getBookingsForDay = (day: number): BookingEvent[] => {
     const dateStr = formatDayStr(currentYear, currentMonth, day);
-    return bookings.filter((b) => dateStr >= b.startDate && dateStr <= b.endDate);
+    return bookings.filter((b) => {
+      const start = b.startDate.substring(0, 10);
+      const end = b.endDate.substring(0, 10);
+      return dateStr >= start && dateStr <= end;
+    });
   };
 
   const handleDayClick = (day: number) => {
