@@ -14,14 +14,14 @@ interface StepIndicatorProps {
 
 export default function StepIndicator({ steps }: StepIndicatorProps) {
   return (
-    <nav aria-label="Progress" className="mb-8">
-      <ol className="flex items-center">
+    <nav aria-label="Progress" className="mb-8 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+      <ol className="flex items-center min-w-max sm:min-w-0">
         {steps.map((step, stepIdx) => (
           <li
             key={step.name}
             className={cn(
-              stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : '',
-              'relative'
+              stepIdx !== steps.length - 1 ? 'pr-6 sm:pr-20' : '',
+              'relative flex-shrink-0 sm:flex-shrink'
             )}
           >
             {stepIdx !== steps.length - 1 && (
