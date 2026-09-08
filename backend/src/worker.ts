@@ -105,7 +105,7 @@ app.get('/api/v1/pricing', async (c) => {
   return c.json({ success: true, data: result });
 });
 
-app.route('/api/v1', agreements);
+app.route('/api/v1/agreements', agreements);
 
 // Webhook routes (no auth)
 app.route('/api/v1/webhooks', webhooks);
