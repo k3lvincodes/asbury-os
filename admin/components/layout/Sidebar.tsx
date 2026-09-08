@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Reservations', href: '/reservations' },
   { name: 'Calendar', href: '/calendar' },
   { name: 'Customers', href: '/customers' },
+  { name: 'Agreements', href: '/agreements' },
   { name: 'Settings', href: '/settings' },
 ];
 

@@ -283,9 +283,11 @@ admin.get('/agreements', async (c) => {
       id,
       reservation_id,
       customer_name,
+      signature_data,
       accepted_at,
       pdf_url,
-      created_at
+      created_at,
+      reservation:reservations(booking_number, rental_start_date, rental_end_date, booking_status, customer:customers(email, phone))
     `)
     .order('created_at', { ascending: false });
 
@@ -307,9 +309,13 @@ admin.get('/agreements/:id', async (c) => {
       id,
       reservation_id,
       customer_name,
+      signature_data,
       accepted_at,
+      ip_address,
       pdf_url,
-      created_at
+      created_at,
+      reservation:reservations(booking_number, rental_start_date, rental_end_date, booking_status, delivery_address, customer:customers(email, phone)),
+      agreement:agreements(version, title)
     `)
     .eq('id', id)
     .single();
