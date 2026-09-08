@@ -106,7 +106,20 @@ payments.post('/create-checkout', async (c) => {
       packageId = pkg.id;
     }
 
-    // 4. Create reservation
+    // 4. Check date availability
+    const { data: conflicts } = await supabase
+      .from('reservations')
+      .select('id')
+      .not('booking_status', 'in', '(cancelled,expired)')
+      .lte('rental_start_date', body.rentalEndDate!)
+      .gte('rental_end_date', body.rentalStartDate!)
+      .limit(1);
+
+    if (conflicts && conflicts.length > 0) {
+      return c.json({ success: false, error: 'These dates are no longer available. Please choose different dates.' }, 409);
+    }
+
+    // 5. Create reservation
     const { data: newReservation, error: reservationError } = await supabase
       .from('reservations')
       .insert({

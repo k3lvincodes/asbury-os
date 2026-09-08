@@ -8,7 +8,7 @@ import DatePicker from '@/components/booking/DatePicker';
 import { BOOKING_STEPS } from '@/lib/constants';
 import { useBookingStore } from '@/lib/store';
 import { formatDate, calculateEndDate, getDaysBetween, calculateCustomPrice } from '@/lib/utils';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 interface AvailabilityResponse {
   trailerId: string;
@@ -17,11 +17,23 @@ interface AvailabilityResponse {
   bookedDates: string[];
 }
 
+interface CheckResponse {
+  available: boolean;
+  startDate?: string;
+  endDate?: string;
+  requestedStart?: string;
+  requestedEnd?: string;
+  suggestions?: { startDate: string; endDate: string }[];
+}
+
 export default function DatesPage() {
   const router = useRouter();
   const { startDate, endDate, setStartDate, setEndDate, selectedPackage, customDays } = useBookingStore();
   const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [suggestions, setSuggestions] = useState<{ startDate: string; endDate: string }[]>([]);
   const [steps] = useState(
     BOOKING_STEPS.map((step, idx) => ({
       ...step,
@@ -53,32 +65,93 @@ export default function DatesPage() {
     fetchAvailability();
   }, []);
 
+  const getDurationDays = (): number => {
+    if (isCustom && customDays) return customDays;
+    if (selectedPackage === '24h') return 1;
+    if (selectedPackage === '3d') return 3;
+    if (selectedPackage === '7d') return 7;
+    return 1;
+  };
+
+  const checkAvailability = async (start: Date, end: Date) => {
+    setCheckingAvailability(true);
+    setAvailabilityError('');
+    setSuggestions([]);
+
+    try {
+      const res = await apiPost<CheckResponse>('/api/v1/availability/check', {
+        startDate: start.toISOString().split('T')[0],
+        endDate: end.toISOString().split('T')[0],
+        durationDays: getDurationDays(),
+      });
+
+      if (res.success && res.data) {
+        if (res.data.available) {
+          setAvailabilityError('');
+          setSuggestions([]);
+        } else {
+          setAvailabilityError(
+            `The trailer is not available from ${formatDate(start)} to ${formatDate(end)}. Some days in this period are already booked.`
+          );
+          setSuggestions(res.data.suggestions || []);
+        }
+      }
+    } catch {
+      setAvailabilityError('Unable to check availability. Please try again.');
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
   const handleStartDateSelect = (date: Date | undefined) => {
     if (!date) {
       setStartDate(null);
       setEndDate(null);
+      setAvailabilityError('');
+      setSuggestions([]);
       return;
     }
 
     setStartDate(date);
+    setAvailabilityError('');
+    setSuggestions([]);
 
     if (!isCustom && selectedPackage) {
       const durationHours = selectedPackage === '24h' ? 24 : selectedPackage === '3d' ? 72 : 168;
       const end = calculateEndDate(date, durationHours);
       setEndDate(end);
+      checkAvailability(date, end);
     }
   };
 
   const handleEndDateSelect = (date: Date | undefined) => {
     if (!date) {
       setEndDate(null);
+      setAvailabilityError('');
+      setSuggestions([]);
       return;
     }
+
     setEndDate(date);
+    setAvailabilityError('');
+    setSuggestions([]);
+
+    if (startDate) {
+      checkAvailability(startDate, date);
+    }
+  };
+
+  const handleSuggestionSelect = (suggestion: { startDate: string; endDate: string }) => {
+    const start = new Date(suggestion.startDate + 'T00:00:00');
+    const end = new Date(suggestion.endDate + 'T00:00:00');
+    setStartDate(start);
+    setEndDate(end);
+    setAvailabilityError('');
+    setSuggestions([]);
   };
 
   const handleContinue = () => {
-    if (startDate && endDate) {
+    if (startDate && endDate && !availabilityError) {
       router.push('/info');
     }
   };
@@ -157,7 +230,7 @@ export default function DatesPage() {
                     <span className="font-medium">{formatDate(endDate)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Pickup Date</span>
+                    <span className="text-gray-600">Return Date</span>
                     <span className="font-medium">{formatDate(endDate)}</span>
                   </div>
                 </div>
@@ -168,6 +241,36 @@ export default function DatesPage() {
           )}
         </div>
       </div>
+
+      {/* Checking availability indicator */}
+      {checkingAvailability && (
+        <div className="mt-6 rounded-md bg-blue-50 p-4">
+          <p className="text-sm text-blue-700">Checking availability...</p>
+        </div>
+      )}
+
+      {/* Availability error with suggestions */}
+      {availabilityError && !checkingAvailability && (
+        <div className="mt-6 rounded-md bg-red-50 p-4">
+          <p className="text-sm font-medium text-red-800">{availabilityError}</p>
+          {suggestions.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm text-red-700">Available alternatives:</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {suggestions.map((sug, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSuggestionSelect(sug)}
+                    className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
+                  >
+                    {formatDate(new Date(sug.startDate + 'T00:00:00'))} – {formatDate(new Date(sug.endDate + 'T00:00:00'))}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Custom Rental Summary */}
       {isCustom && startDate && endDate && (
@@ -187,7 +290,7 @@ export default function DatesPage() {
               <span className="font-medium">{formatDate(endDate)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Pickup Date</span>
+              <span className="text-gray-600">Return Date</span>
               <span className="font-medium">{formatDate(endDate)}</span>
             </div>
             <div className="flex justify-between border-t border-gray-200 pt-4">
@@ -209,7 +312,7 @@ export default function DatesPage() {
         </button>
         <button
           onClick={handleContinue}
-          disabled={!startDate || !endDate}
+          disabled={!startDate || !endDate || !!availabilityError || checkingAvailability}
           className="rounded-md bg-forest px-6 py-3 text-white font-medium hover:bg-forest-600 disabled:opacity-50"
         >
           Continue
