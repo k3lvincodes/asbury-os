@@ -4,7 +4,7 @@ import { Env } from '../worker';
 const charges = new Hono<{ Bindings: Env }>();
 
 // Get charges for a reservation
-charges.get('/:reservationId', async (c) => {
+charges.get('/reservation/:reservationId', async (c) => {
   const reservationId = c.req.param('reservationId');
   
   // In production, fetch from Supabase
@@ -15,7 +15,7 @@ charges.get('/:reservationId', async (c) => {
 });
 
 // Create a new charge
-charges.post('/:reservationId', async (c) => {
+charges.post('/reservation/:reservationId', async (c) => {
   const reservationId = c.req.param('reservationId');
   const body = await c.req.json();
   

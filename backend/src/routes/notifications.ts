@@ -5,7 +5,7 @@ import { createSupabaseServiceClient } from '../config/supabase';
 const notifications = new Hono<{ Bindings: Env }>();
 
 // Get notifications for a reservation
-notifications.get('/:reservationId', async (c) => {
+notifications.get('/reservation/:reservationId', async (c) => {
   const reservationId = c.req.param('reservationId');
 
   if (!c.env.SUPABASE_URL || !c.env.SUPABASE_SERVICE_ROLE_KEY) {
