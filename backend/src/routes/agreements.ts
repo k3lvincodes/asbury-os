@@ -1,6 +1,52 @@
-import { Hono } from 'hono';
+﻿import { Hono } from 'hono';
+import { Env } from '../worker';
+import { createSupabaseServiceClient } from '../config/supabase';
 
-const AGREEMENT_CONTENT = `
+const agreements = new Hono<{ Bindings: Env }>();
+
+// Format cents to dollar string e.g. 22500 -> "$225"
+function fmt(cents: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100);
+}
+
+interface Pricing {
+  package_24h_price: number;
+  package_3d_price: number;
+  package_7d_price: number;
+  extra_day_price: number;
+  extra_mile_price: number;
+  overweight_per_ton: number;
+  failed_pickup_fee: number;
+  cleaning_fee_max: number;
+  included_miles: number;
+}
+
+const DEFAULT_PRICING: Pricing = {
+  package_24h_price: 22500,
+  package_3d_price: 37500,
+  package_7d_price: 67500,
+  extra_day_price: 7500,
+  extra_mile_price: 300,
+  overweight_per_ton: 12500,
+  failed_pickup_fee: 7500,
+  cleaning_fee_max: 10000,
+  included_miles: 10,
+};
+
+async function fetchPricing(c: { env: Env }): Promise<Pricing> {
+  try {
+    if (!c.env.SUPABASE_URL || !c.env.SUPABASE_SERVICE_ROLE_KEY) return DEFAULT_PRICING;
+    const supabase = createSupabaseServiceClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { data } = await supabase.from('pricing').select('*').limit(1).single();
+    if (!data) return DEFAULT_PRICING;
+    return { ...DEFAULT_PRICING, ...data };
+  } catch {
+    return DEFAULT_PRICING;
+  }
+}
+
+function buildAgreementContent(p: Pricing): string {
+  return `
 <div style="font-family: Georgia, 'Times New Roman', serif; color: #1a1a2e; line-height: 1.8; font-size: 14px;">
 
 <div style="text-align: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #1a5632;">
@@ -28,20 +74,20 @@ const AGREEMENT_CONTENT = `
 
 <h2 style="font-size: 16px; font-weight: 700; color: #1a1a2e; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">2. Rental Pricing</h2>
 <ul style="margin: 0; padding-left: 20px;">
-  <li style="margin-bottom: 10px;">Up to 24 hours: <strong>$225</strong></li>
-  <li style="margin-bottom: 10px;">Up to 3 days: <strong>$400</strong></li>
-  <li style="margin-bottom: 10px;">Up to 7 days: <strong>$600</strong></li>
-  <li style="margin-bottom: 10px;">Each rental includes up to <strong>1 ton (2,000 lbs.)</strong> of disposed material, delivery, one final pickup, and one dump/disposal run within the included service area.</li>
-  <li style="margin-bottom: 10px;">Disposal weight above the included 1 ton is charged at <strong>$125 per additional ton</strong>. Partial tons may be prorated based on the final scale weight.</li>
-  <li style="margin-bottom: 10px;">Additional rental time beyond the purchased period is <strong>$75 per additional day</strong>, subject to availability and prior approval.</li>
-  <li style="margin-bottom: 10px;">Delivery and pickup are included within 10 miles of Charleston, West Virginia. Locations beyond that service area are charged <strong>$3.00 per additional mile</strong>.</li>
+  <li style="margin-bottom: 10px;">Up to 24 hours: <strong>${fmt(p.package_24h_price)}</strong></li>
+  <li style="margin-bottom: 10px;">Up to 3 days: <strong>${fmt(p.package_3d_price)}</strong></li>
+  <li style="margin-bottom: 10px;">Up to 7 days: <strong>${fmt(p.package_7d_price)}</strong></li>
+  <li style="margin-bottom: 10px;">Each rental includes up to <strong>1 ton (2,000 lbs.)</strong> of disposed material, delivery, one final pickup, and one dump/disposal run within the included service area (first <strong>${p.included_miles} miles</strong>).</li>
+  <li style="margin-bottom: 10px;">Disposal weight above the included 1 ton is charged at <strong>${fmt(p.overweight_per_ton)} per additional ton</strong>. Partial tons may be prorated based on the final scale weight.</li>
+  <li style="margin-bottom: 10px;">Additional rental time beyond the purchased period is <strong>${fmt(p.extra_day_price)} per additional day</strong>, subject to availability and prior approval.</li>
+  <li style="margin-bottom: 10px;">Delivery and pickup are included within ${p.included_miles} miles of Charleston, West Virginia. Locations beyond that service area are charged <strong>${fmt(p.extra_mile_price)} per additional mile</strong>.</li>
   <li style="margin-bottom: 10px;">A final dump ticket or weight slip can be provided upon request.</li>
 </ul>
 
 <h2 style="font-size: 16px; font-weight: 700; color: #1a1a2e; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">3. Additional Charges</h2>
 <ul style="margin: 0; padding-left: 20px;">
-  <li style="margin-bottom: 10px;">If the trailer is blocked, inaccessible, overloaded, or otherwise not ready for the scheduled pickup, a <strong>$75 return-trip fee</strong> may be charged.</li>
-  <li style="margin-bottom: 10px;">Excessive cleaning beyond normal use may result in a cleaning fee of up to <strong>$100</strong>.</li>
+  <li style="margin-bottom: 10px;">If the trailer is blocked, inaccessible, overloaded, or otherwise not ready for the scheduled pickup, a <strong>${fmt(p.failed_pickup_fee)} return-trip fee</strong> may be charged.</li>
+  <li style="margin-bottom: 10px;">Excessive cleaning beyond normal use may result in a cleaning fee of up to <strong>${fmt(p.cleaning_fee_max)}</strong>.</li>
   <li style="margin-bottom: 10px;">Returned or failed payments may be charged <strong>$35</strong> or the maximum amount permitted by applicable law, whichever is less.</li>
   <li style="margin-bottom: 10px;">The Customer is responsible for actual disposal charges, fines, cleanup costs, damage, or other expenses resulting from prohibited materials or misuse.</li>
   <li style="margin-bottom: 10px;">The Customer authorizes Asbury Outdoor Services to charge the payment method provided for amounts properly due under this Agreement, including excess weight, approved extensions, damage, prohibited-material charges, and other applicable fees.</li>
@@ -95,17 +141,17 @@ const AGREEMENT_CONTENT = `
 </div>
 
 </div>`;
+}
 
-const agreements = new Hono();
-
-// Get current agreement
+// Get current agreement â€” fetches live pricing from DB
 agreements.get('/', async (c) => {
+  const pricing = await fetchPricing(c);
   return c.json({
     success: true,
     data: {
       version: '1.0',
       title: 'Dump Trailer Service Agreement & Terms of Use',
-      content: AGREEMENT_CONTENT,
+      content: buildAgreementContent(pricing),
     },
   });
 });
@@ -113,12 +159,13 @@ agreements.get('/', async (c) => {
 // Get specific agreement version
 agreements.get('/versions/:version', async (c) => {
   const version = c.req.param('version');
+  const pricing = await fetchPricing(c);
   return c.json({
     success: true,
     data: {
       version,
       title: 'Dump Trailer Service Agreement & Terms of Use',
-      content: AGREEMENT_CONTENT,
+      content: buildAgreementContent(pricing),
     },
   });
 });
