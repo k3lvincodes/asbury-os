@@ -11,6 +11,7 @@ interface DatePickerProps {
   disabledDates?: Date[];
   bookedDates?: string[];
   minDate?: Date;
+  onMonthChange?: (month: Date) => void;
 }
 
 export default function DatePicker({
@@ -19,26 +20,40 @@ export default function DatePicker({
   disabledDates = [],
   bookedDates = [],
   minDate = new Date(),
+  onMonthChange,
 }: DatePickerProps) {
   const [month, setMonth] = useState<Date>(selected || new Date());
 
   const bookedDateObjects = useMemo(
-    () => bookedDates.map((d) => new Date(d + 'T00:00:00')),
+    () => bookedDates.map((d) => {
+      const [y, m, day] = d.split('-').map(Number);
+      return new Date(y, m - 1, day, 0, 0, 0, 0);
+    }),
     [bookedDates]
+  );
+
+  // Normalise minDate to midnight local to avoid same-day being disabled
+  const normalisedMinDate = new Date(
+    minDate.getFullYear(), minDate.getMonth(), minDate.getDate(), 0, 0, 0, 0
   );
 
   const allDisabled = [...disabledDates, ...bookedDateObjects];
 
+  const handleMonthChange = (newMonth: Date) => {
+    setMonth(newMonth);
+    onMonthChange?.(newMonth);
+  };
+
   return (
-    <div className="rounded-lg bg-white">
+    <div className={cn('rounded-lg bg-white')}>
       <DayPicker
         mode="single"
         selected={selected}
         onSelect={onSelect}
         month={month}
-        onMonthChange={setMonth}
+        onMonthChange={handleMonthChange}
         disabled={[
-          { before: minDate },
+          { before: normalisedMinDate },
           ...allDisabled,
         ]}
         modifiers={{
