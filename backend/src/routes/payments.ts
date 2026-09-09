@@ -249,17 +249,18 @@ payments.post('/verify', async (c) => {
 
     console.log(`[verify] Found reservation ${reservation.id}, payment_status: ${reservation.payment_status}`);
 
-    // Send confirmation notifications if not already attempted for this reservation
+    // Send confirmation notifications if not already sent for this reservation
     const sendNotifications = async () => {
-      const { data: existingNotifications } = await supabase
+      const { data: existingSent } = await supabase
         .from('notifications')
         .select('id')
         .eq('reservation_id', reservation.id)
-        .in('template', ['reservation_confirmed', 'reservation_confirmed_admin'])
+        .eq('template', 'reservation_confirmed')
+        .eq('status', 'sent')
         .limit(1);
 
-      if (existingNotifications && existingNotifications.length > 0) {
-        console.log(`[verify] Notifications already attempted for ${reservation.id}, skipping`);
+      if (existingSent && existingSent.length > 0) {
+        console.log(`[verify] Notifications already sent for ${reservation.id}, skipping`);
         return;
       }
 
@@ -277,8 +278,10 @@ payments.post('/verify', async (c) => {
       const customer = fullReservation.customer as any;
       const pkg = fullReservation.package as any;
       console.log(`[verify] Sending notification to ${customer.email} for booking ${fullReservation.booking_number}`);
-      const { Resend } = await import('resend');
-      const resend = new Resend(c.env.RESEND_API_KEY);
+      const resendApiKey = c.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '';
+      const fromEmail = c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
+      const adminEmail = c.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com';
+      const resend = new Resend(resendApiKey);
       const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
         ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
         : null;
@@ -288,7 +291,7 @@ payments.post('/verify', async (c) => {
           supabase,
           resend,
           twilioClient,
-          c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
+          fromEmail,
           c.env.TWILIO_PHONE_NUMBER || null,
           fullReservation.id,
           customer.email,
@@ -302,7 +305,7 @@ payments.post('/verify', async (c) => {
             amountDue: fullReservation.amount_due_cents,
             deliveryAddress: fullReservation.delivery_address,
           },
-          c.env.ADMIN_EMAIL || null
+          adminEmail
         );
         console.log(`[verify] Notifications sent successfully`);
       } catch (notifError) {

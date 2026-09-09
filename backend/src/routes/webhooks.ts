@@ -62,9 +62,11 @@ webhooks.post('/stripe', async (c) => {
 
           if (fullReservation) {
             const customer = fullReservation.customer as any;
-            const pkg = fullReservation.package as any;
+            const resendApiKey = c.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '';
+            const fromEmail = c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
+            const adminEmail = c.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com';
             const { Resend } = await import('resend');
-            const resend = new Resend(c.env.RESEND_API_KEY);
+            const resend = new Resend(resendApiKey);
             const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
               ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
               : null;
@@ -73,7 +75,7 @@ webhooks.post('/stripe', async (c) => {
               supabase,
               resend,
               twilioClient,
-              c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
+              fromEmail,
               c.env.TWILIO_PHONE_NUMBER || null,
               fullReservation.id,
               customer.email,
@@ -87,7 +89,7 @@ webhooks.post('/stripe', async (c) => {
                 amountDue: fullReservation.amount_due_cents,
                 deliveryAddress: fullReservation.delivery_address,
               },
-              c.env.ADMIN_EMAIL || null
+              adminEmail
             );
           }
         } catch (notifError) {

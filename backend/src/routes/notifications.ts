@@ -16,7 +16,7 @@ notifications.get('/reservation/:reservationId', async (c) => {
 
   const { data, error } = await supabase
     .from('notifications')
-    .select('*, reservations!inner(booking_number)')
+    .select('*, reservations(booking_number)')
     .eq('reservation_id', reservationId)
     .order('created_at', { ascending: false });
 
@@ -48,7 +48,7 @@ notifications.get('/', async (c) => {
 
   const { data, error } = await supabase
     .from('notifications')
-    .select('*, reservations!inner(booking_number)')
+    .select('*, reservations(booking_number)')
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

@@ -2,6 +2,15 @@ import { Resend } from 'resend';
 import twilio from 'twilio';
 import { SupabaseClient } from '@supabase/supabase-js';
 
+export const DEFAULT_RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+export const DEFAULT_FROM_EMAIL = 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
+export const DEFAULT_ADMIN_EMAIL = 'contact@asburyoutdoorservices.com';
+
+export function formatFromEmail(email?: string | null): string {
+  const target = email?.trim() || DEFAULT_FROM_EMAIL;
+  return target.includes('<') ? target : `Asbury Outdoor Services <${target}>`;
+}
+
 interface NotificationData {
   reservationId: string;
   type: 'email' | 'sms';
@@ -17,13 +26,13 @@ export async function sendReservationConfirmed(
   supabase: SupabaseClient,
   resend: Resend,
   twilioClient: twilio.Twilio | null,
-  fromEmail: string,
-  fromPhone: string | null,
-  reservationId: string,
-  customerEmail: string,
-  customerPhone: string,
-  adminPhone: string | null,
-  bookingData: {
+  fromEmail?: string | null,
+  fromPhone?: string | null,
+  reservationId?: string,
+  customerEmail?: string,
+  customerPhone?: string,
+  adminPhone?: string | null,
+  bookingData?: {
     bookingNumber: string;
     packageName: string;
     startDate: string;
@@ -33,6 +42,14 @@ export async function sendReservationConfirmed(
   },
   adminEmail?: string | null
 ) {
+  if (!reservationId || !bookingData || !customerEmail) {
+    console.error('[notify] Missing required fields for sendReservationConfirmed');
+    return;
+  }
+
+  const effectiveFromEmail = formatFromEmail(fromEmail);
+  const effectiveAdminEmail = adminEmail?.trim() || DEFAULT_ADMIN_EMAIL;
+
   const formattedTotal = `$${(bookingData.amountDue / 100).toFixed(2)}`;
   const formattedStart = new Date(bookingData.startDate).toLocaleDateString('en-US', {
     weekday: 'long',
@@ -48,9 +65,7 @@ export async function sendReservationConfirmed(
   });
 
   const packageName = bookingData.packageName || 'Custom';
-
-  // Resend requires "Display Name <email>" format — auto-wrap bare addresses
-  const safeFromEmail = fromEmail.includes('<') ? fromEmail : `Asbury Outdoor Services <${fromEmail}>`;
+  const safeFromEmail = effectiveFromEmail;
 
   const emailHtml = `
     <!DOCTYPE html>
@@ -172,7 +187,7 @@ export async function sendReservationConfirmed(
     }).eq('id', id);
   };
 
-  if (fromEmail) {
+  if (safeFromEmail && customerEmail) {
     const { log: emailLog } = await notification('email', 'reservation_confirmed', customerEmail, `Reservation Confirmed - ${bookingData.bookingNumber}`);
     try {
       await resend.emails.send({ from: safeFromEmail, to: customerEmail, subject: `Reservation Confirmed - ${bookingData.bookingNumber}`, html: emailHtml });
@@ -180,6 +195,30 @@ export async function sendReservationConfirmed(
     } catch (e: any) {
       console.error('[notify] Failed to send customer confirmation email:', JSON.stringify(e));
       if (emailLog) await updateLog(emailLog.id, 'failed', { error: e?.message || String(e) });
+    }
+  }
+
+  if (effectiveAdminEmail && safeFromEmail) {
+    const { log: adminEmailLog } = await notification('email', 'reservation_confirmed_admin', effectiveAdminEmail, `New Reservation - ${bookingData.bookingNumber}`);
+    try {
+      await resend.emails.send({
+        from: safeFromEmail,
+        to: effectiveAdminEmail,
+        subject: `New Reservation - ${bookingData.bookingNumber}`,
+        html: `
+          <h2>New Reservation Confirmed</h2>
+          <p><strong>Booking:</strong> ${bookingData.bookingNumber}</p>
+          <p><strong>Package:</strong> ${packageName}</p>
+          <p><strong>Customer:</strong> ${customerEmail}</p>
+          <p><strong>Dates:</strong> ${formattedStart} - ${formattedEnd}</p>
+          <p><strong>Total:</strong> ${formattedTotal}</p>
+          <p><strong>Delivery:</strong> ${bookingData.deliveryAddress}</p>
+        `,
+      });
+      if (adminEmailLog) await updateLog(adminEmailLog.id, 'sent');
+    } catch (e: any) {
+      console.error('[notify] Failed to send admin notification email:', JSON.stringify(e));
+      if (adminEmailLog) await updateLog(adminEmailLog.id, 'failed', { error: e?.message || String(e) });
     }
   }
 
@@ -200,30 +239,6 @@ export async function sendReservationConfirmed(
       if (adminSmsLog) await updateLog(adminSmsLog.id, 'sent');
     } catch (e: any) {
       if (adminSmsLog) await updateLog(adminSmsLog.id, 'failed', { error: e.message || e });
-    }
-  }
-
-  if (adminEmail && fromEmail) {
-    const { log: adminEmailLog } = await notification('email', 'reservation_confirmed_admin', adminEmail, `New Reservation - ${bookingData.bookingNumber}`);
-    try {
-      await resend.emails.send({
-        from: safeFromEmail,
-        to: adminEmail,
-        subject: `New Reservation - ${bookingData.bookingNumber}`,
-        html: `
-          <h2>New Reservation Confirmed</h2>
-          <p><strong>Booking:</strong> ${bookingData.bookingNumber}</p>
-          <p><strong>Package:</strong> ${packageName}</p>
-          <p><strong>Customer:</strong> ${customerEmail}</p>
-          <p><strong>Dates:</strong> ${formattedStart} - ${formattedEnd}</p>
-          <p><strong>Total:</strong> ${formattedTotal}</p>
-          <p><strong>Delivery:</strong> ${bookingData.deliveryAddress}</p>
-        `,
-      });
-      if (adminEmailLog) await updateLog(adminEmailLog.id, 'sent');
-    } catch (e: any) {
-      console.error('[notify] Failed to send admin notification email:', JSON.stringify(e));
-      if (adminEmailLog) await updateLog(adminEmailLog.id, 'failed', { error: e?.message || String(e) });
     }
   }
 }

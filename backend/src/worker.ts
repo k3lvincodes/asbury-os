@@ -1,3 +1,18 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Automatically load .env into process.env if present
+try {
+  if (typeof process.loadEnvFile === 'function') {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      process.loadEnvFile(envPath);
+    }
+  }
+} catch (e) {
+  // Ignore if already loaded or missing
+}
+
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
@@ -42,23 +57,22 @@ const app = new Hono<{ Bindings: Env }>();
 // Middleware to inject environment variables into c.env (Node.js compatibility)
 app.use('*', async (c, next) => {
   c.env = {
-    SUPABASE_URL: process.env.SUPABASE_URL || '',
+    SUPABASE_URL: process.env.SUPABASE_URL || 'https://juorbzueukqhufnojagu.supabase.co',
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
-    CLIENT_URL: process.env.CLIENT_URL || '',
-    ADMIN_URL: process.env.ADMIN_URL || '',
+    CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
+    ADMIN_URL: process.env.ADMIN_URL || 'http://localhost:3001',
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
-    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
     RESEND_API_KEY: process.env.RESEND_API_KEY || '',
-    EMAIL_FROM: process.env.EMAIL_FROM || '',
+    EMAIL_FROM: process.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
     TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
     TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || '',
     ADMIN_PHONE_NUMBER: process.env.ADMIN_PHONE_NUMBER || '',
-    ADMIN_EMAIL: process.env.ADMIN_EMAIL || '',
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com',
     JWT_SECRET: process.env.JWT_SECRET || '',
     ENVIRONMENT: process.env.NODE_ENV || 'development',
   } as Env;
@@ -118,10 +132,16 @@ app.route('/api/v1', auth);
 // Protected admin routes (require auth)
 app.use('/api/v1/admin/*', requireAuth);
 app.route('/api/v1/admin', admin);
+app.route('/api/v1/admin/charges', charges);
 app.route('/api/v1/admin', charges);
+app.route('/api/v1/admin/notifications', notifications);
 app.route('/api/v1/admin', notifications);
 app.route('/api/v1/admin/customers', customers);
+app.route('/api/v1/admin/settings', settings);
 app.route('/api/v1/admin', settings);
+
+// Notification endpoints alias
+app.route('/api/v1/notifications', notifications);
 
 // Health check
 app.get('/', (c) => {
