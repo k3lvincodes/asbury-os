@@ -255,7 +255,7 @@ payments.post('/verify', async (c) => {
         .from('notifications')
         .select('id')
         .eq('reservation_id', reservation.id)
-        .eq('template', 'reservation_confirmed')
+        .in('template', ['reservation_confirmed', 'reservation_confirmed_admin'])
         .limit(1);
 
       if (existingNotifications && existingNotifications.length > 0) {

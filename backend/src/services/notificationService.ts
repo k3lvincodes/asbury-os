@@ -49,6 +49,9 @@ export async function sendReservationConfirmed(
 
   const packageName = bookingData.packageName || 'Custom';
 
+  // Resend requires "Display Name <email>" format — auto-wrap bare addresses
+  const safeFromEmail = fromEmail.includes('<') ? fromEmail : `Asbury Outdoor Services <${fromEmail}>`;
+
   const emailHtml = `
     <!DOCTYPE html>
     <html>
@@ -149,96 +152,62 @@ export async function sendReservationConfirmed(
     </html>
   `;
 
-  try {
-    await resend.emails.send({
-      from: fromEmail,
-      to: customerEmail,
-      subject: `Reservation Confirmed - ${bookingData.bookingNumber}`,
-      html: emailHtml,
-    });
+  const notification = async (type: 'email' | 'sms', template: string, recipient: string, subject?: string, body?: string) => {
+    const { data: log, error } = await supabase.from('notifications').insert({
+      reservation_id: reservationId,
+      type,
+      template,
+      recipient,
+      subject,
+      status: 'queued',
+    }).select().single();
+    return { log, error };
+  };
 
-    await logNotification(supabase, {
-      reservationId,
-      type: 'email',
-      template: 'reservation_confirmed',
-      recipient: customerEmail,
-      subject: `Reservation Confirmed - ${bookingData.bookingNumber}`,
-      status: 'sent',
-    });
-  } catch (emailError) {
-    console.error('Failed to send reservation confirmation email:', emailError);
-    await logNotification(supabase, {
-      reservationId,
-      type: 'email',
-      template: 'reservation_confirmed',
-      recipient: customerEmail,
-      subject: `Reservation Confirmed - ${bookingData.bookingNumber}`,
-      status: 'failed',
-      metadata: { error: emailError instanceof Error ? emailError.message : 'Unknown error' },
-    });
+  const updateLog = async (id: string, status: 'sent' | 'failed', metadata?: any) => {
+    await supabase.from('notifications').update({
+      status,
+      metadata,
+      sent_at: status === 'sent' ? new Date().toISOString() : null,
+    }).eq('id', id);
+  };
+
+  if (fromEmail) {
+    const { log: emailLog } = await notification('email', 'reservation_confirmed', customerEmail, `Reservation Confirmed - ${bookingData.bookingNumber}`);
+    try {
+      await resend.emails.send({ from: safeFromEmail, to: customerEmail, subject: `Reservation Confirmed - ${bookingData.bookingNumber}`, html: emailHtml });
+      if (emailLog) await updateLog(emailLog.id, 'sent');
+    } catch (e: any) {
+      console.error('[notify] Failed to send customer confirmation email:', JSON.stringify(e));
+      if (emailLog) await updateLog(emailLog.id, 'failed', { error: e?.message || String(e) });
+    }
   }
 
   if (twilioClient && fromPhone && customerPhone) {
+    const { log: smsLog } = await notification('sms', 'reservation_confirmed', customerPhone);
     try {
-      await twilioClient.messages.create({
-        from: fromPhone,
-        to: customerPhone,
-        body: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!`,
-      });
-
-      await logNotification(supabase, {
-        reservationId,
-        type: 'sms',
-        template: 'reservation_confirmed',
-        recipient: customerPhone,
-        status: 'sent',
-      });
-    } catch (smsError) {
-      console.error('Failed to send reservation confirmation SMS:', smsError);
-      await logNotification(supabase, {
-        reservationId,
-        type: 'sms',
-        template: 'reservation_confirmed',
-        recipient: customerPhone,
-        status: 'failed',
-        metadata: { error: smsError instanceof Error ? smsError.message : 'Unknown error' },
-      });
+      await twilioClient.messages.create({ from: fromPhone, to: customerPhone, body: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!` });
+      if (smsLog) await updateLog(smsLog.id, 'sent');
+    } catch (e: any) {
+      if (smsLog) await updateLog(smsLog.id, 'failed', { error: e.message || e });
     }
   }
 
   if (twilioClient && fromPhone && adminPhone) {
+    const { log: adminSmsLog } = await notification('sms', 'reservation_confirmed_admin', adminPhone);
     try {
-      await twilioClient.messages.create({
-        from: fromPhone,
-        to: adminPhone,
-        body: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}`,
-      });
-
-      await logNotification(supabase, {
-        reservationId,
-        type: 'sms',
-        template: 'reservation_confirmed_admin',
-        recipient: adminPhone,
-        status: 'sent',
-      });
-    } catch (smsError) {
-      console.error('Failed to send admin notification SMS:', smsError);
-      await logNotification(supabase, {
-        reservationId,
-        type: 'sms',
-        template: 'reservation_confirmed_admin',
-        recipient: adminPhone,
-        status: 'failed',
-        metadata: { error: smsError instanceof Error ? smsError.message : 'Unknown error' },
-      });
+      await twilioClient.messages.create({ from: fromPhone, to: adminPhone, body: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}` });
+      if (adminSmsLog) await updateLog(adminSmsLog.id, 'sent');
+    } catch (e: any) {
+      if (adminSmsLog) await updateLog(adminSmsLog.id, 'failed', { error: e.message || e });
     }
   }
 
-  // Admin email notification
-  if (adminEmail) {
+  if (adminEmail && fromEmail) {
+    const { log: adminEmailLog } = await notification('email', 'reservation_confirmed_admin', adminEmail, `New Reservation - ${bookingData.bookingNumber}`);
     try {
       await resend.emails.send({
-        from: fromEmail,
+        from: safeFromEmail,
         to: adminEmail,
         subject: `New Reservation - ${bookingData.bookingNumber}`,
         html: `
@@ -251,26 +220,10 @@ export async function sendReservationConfirmed(
           <p><strong>Delivery:</strong> ${bookingData.deliveryAddress}</p>
         `,
       });
-
-      await logNotification(supabase, {
-        reservationId,
-        type: 'email',
-        template: 'reservation_confirmed_admin',
-        recipient: adminEmail,
-        subject: `New Reservation - ${bookingData.bookingNumber}`,
-        status: 'sent',
-      });
-    } catch (emailError) {
-      console.error('Failed to send admin notification email:', emailError);
-      await logNotification(supabase, {
-        reservationId,
-        type: 'email',
-        template: 'reservation_confirmed_admin',
-        recipient: adminEmail,
-        subject: `New Reservation - ${bookingData.bookingNumber}`,
-        status: 'failed',
-        metadata: { error: emailError instanceof Error ? emailError.message : 'Unknown error' },
-      });
+      if (adminEmailLog) await updateLog(adminEmailLog.id, 'sent');
+    } catch (e: any) {
+      console.error('[notify] Failed to send admin notification email:', JSON.stringify(e));
+      if (adminEmailLog) await updateLog(adminEmailLog.id, 'failed', { error: e?.message || String(e) });
     }
   }
 }
