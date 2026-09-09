@@ -38,19 +38,33 @@ availability.post('/check', async (c) => {
   sixMonthsOut.setMonth(sixMonthsOut.getMonth() + 6);
   const futureDate = sixMonthsOut.toISOString().split('T')[0];
 
-  const { data: reservations, error } = await supabase
+  const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+  // Fetch confirmed/active reservations
+  const { data: confirmedRes, error } = await supabase
     .from('reservations')
     .select('rental_start_date, rental_end_date')
     .gte('rental_end_date', today)
     .lte('rental_start_date', futureDate)
-    .in('booking_status', ['confirmed', 'awaiting_payment']);
+    .in('booking_status', ['confirmed', 'active']);
+
+  // Also fetch fresh awaiting_payment holds (not yet expired)
+  const { data: pendingRes } = await supabase
+    .from('reservations')
+    .select('rental_start_date, rental_end_date')
+    .gte('rental_end_date', today)
+    .lte('rental_start_date', futureDate)
+    .eq('booking_status', 'awaiting_payment')
+    .gte('created_at', fifteenMinAgo);
+
+  const reservations = [...(confirmedRes || []), ...(pendingRes || [])];
 
   if (error) {
     return c.json({ success: false, error: error.message }, 500);
   }
 
   // Check if requested range overlaps with any booking
-  const isAvailable = !(reservations || []).some(
+  const isAvailable = !reservations.some(
     (r) => startDate <= r.rental_end_date && endDate! >= r.rental_start_date
   );
 
@@ -177,18 +191,34 @@ availability.get('/dates', async (c) => {
   const nextYear = monthNum === 12 ? yearNum + 1 : yearNum;
   const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
 
-  let query = supabase
+  const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+  let baseQuery = supabase
     .from('reservations')
     .select('rental_start_date, rental_end_date')
     .gte('rental_end_date', startDate)
     .lt('rental_start_date', endDate)
-    .in('booking_status', ['confirmed', 'awaiting_payment']);
+    .in('booking_status', ['confirmed', 'active']);
 
   if (trailerId) {
-    query = query.eq('trailer_id', trailerId);
+    baseQuery = baseQuery.eq('trailer_id', trailerId);
   }
 
-  const { data: reservations, error } = await query;
+  let pendingQuery = supabase
+    .from('reservations')
+    .select('rental_start_date, rental_end_date')
+    .gte('rental_end_date', startDate)
+    .lt('rental_start_date', endDate)
+    .eq('booking_status', 'awaiting_payment')
+    .gte('created_at', fifteenMinAgo);
+
+  if (trailerId) {
+    pendingQuery = pendingQuery.eq('trailer_id', trailerId);
+  }
+
+  const [{ data: confirmedRes, error }, { data: pendingRes }] = await Promise.all([baseQuery, pendingQuery]);
+
+  const reservations = [...(confirmedRes || []), ...(pendingRes || [])];
 
   if (error) {
     return c.json({ success: false, error: error.message }, 500);

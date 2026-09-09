@@ -106,26 +106,28 @@ payments.post('/create-checkout', async (c) => {
       packageId = pkg.id;
     }
 
-    // 4. Check date availability — only block on confirmed/paid reservations
+    // 4a. First — expire any stale awaiting_payment reservations so they don't block new bookings
+    const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    await supabase
+      .from('reservations')
+      .update({ booking_status: 'expired', updated_at: new Date().toISOString() })
+      .eq('booking_status', 'awaiting_payment')
+      .lt('created_at', fifteenMinAgo);
+
+    // 4b. Check date availability against confirmed/active + fresh awaiting_payment reservations
+    //     (must match what the availability calendar shows as blocked)
     const { data: conflicts } = await supabase
       .from('reservations')
       .select('id')
-      .in('booking_status', ['confirmed', 'active'])
+      .in('booking_status', ['confirmed', 'active', 'awaiting_payment'])
       .lte('rental_start_date', body.rentalEndDate!)
       .gte('rental_end_date', body.rentalStartDate!)
       .limit(1);
 
     if (conflicts && conflicts.length > 0) {
-      return c.json({ success: false, error: 'These dates are no longer available. Please choose different dates.' }, 409);
+      return c.json({ success: false, error: 'These dates are temporarily held by another checkout in progress. Please try again in a few minutes or choose different dates.' }, 409);
     }
 
-    // 4b. Cancel stale awaiting_payment reservations older than 30 minutes
-    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-    await supabase
-      .from('reservations')
-      .update({ booking_status: 'expired', updated_at: new Date().toISOString() })
-      .eq('booking_status', 'awaiting_payment')
-      .lt('created_at', thirtyMinAgo);
 
     // 5. Create reservation
     const { data: newReservation, error: reservationError } = await supabase
