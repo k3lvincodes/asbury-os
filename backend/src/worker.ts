@@ -120,7 +120,7 @@ app.use('/api/v1/admin/*', requireAuth);
 app.route('/api/v1/admin', admin);
 app.route('/api/v1/admin', charges);
 app.route('/api/v1/admin', notifications);
-app.route('/api/v1/admin', customers);
+app.route('/api/v1/admin/customers', customers);
 app.route('/api/v1/admin', settings);
 
 // Health check
