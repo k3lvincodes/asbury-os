@@ -44,6 +44,7 @@ export interface Env {
   RESEND_API_KEY: string;
   EMAIL_FROM: string;
   TELNYX_API_KEY: string;
+  TELNYX_PUBLIC_KEY: string;
   TELNYX_PHONE_NUMBER: string;
   ADMIN_PHONE_NUMBER: string;
   ADMIN_EMAIL: string;
@@ -69,6 +70,7 @@ app.use('*', async (c, next) => {
     RESEND_API_KEY: process.env.RESEND_API_KEY || '',
     EMAIL_FROM: process.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
     TELNYX_API_KEY: process.env.TELNYX_API_KEY || '',
+    TELNYX_PUBLIC_KEY: process.env.TELNYX_PUBLIC_KEY || '',
     TELNYX_PHONE_NUMBER: process.env.TELNYX_PHONE_NUMBER || '',
     ADMIN_PHONE_NUMBER: process.env.ADMIN_PHONE_NUMBER || '',
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com',

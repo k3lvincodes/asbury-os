@@ -350,7 +350,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
                                 {notif.type === 'in_app' ? 'app' : notif.type}
                               </span>
                               <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                notif.status === 'sent' ? 'bg-green-100 text-green-800'
+                                notif.status === 'sent' || notif.status === 'delivered' ? 'bg-green-100 text-green-800'
                                 : notif.status === 'read' ? 'bg-gray-100 text-gray-600'
                                 : notif.status === 'failed' ? 'bg-red-100 text-red-800'
                                 : 'bg-yellow-100 text-yellow-800'

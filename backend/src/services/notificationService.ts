@@ -179,12 +179,14 @@ export async function sendReservationConfirmed(
     return { log, error };
   };
 
-  const updateLog = async (id: string, status: 'sent' | 'failed', metadata?: any) => {
-    await supabase.from('notifications').update({
+  const updateLog = async (id: string, status: 'sent' | 'failed', metadata?: any, providerId?: string | null) => {
+    const patch: Record<string, any> = {
       status,
       metadata,
       sent_at: status === 'sent' ? new Date().toISOString() : null,
-    }).eq('id', id);
+    };
+    if (providerId) patch.provider_id = providerId;
+    await supabase.from('notifications').update(patch).eq('id', id);
   };
 
   if (safeFromEmail && customerEmail) {
@@ -225,8 +227,8 @@ export async function sendReservationConfirmed(
   if (telnyxClient && fromPhone && customerPhone) {
     const { log: smsLog } = await notification('sms', 'reservation_confirmed', customerPhone);
     try {
-      await telnyxClient.messages.send({ from: fromPhone, to: customerPhone, text: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!` });
-      if (smsLog) await updateLog(smsLog.id, 'sent');
+      const { data: message } = await telnyxClient.messages.send({ from: fromPhone, to: customerPhone, text: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!` });
+      if (smsLog) await updateLog(smsLog.id, 'sent', undefined, message?.id);
     } catch (e: any) {
       if (smsLog) await updateLog(smsLog.id, 'failed', { error: e.message || e });
     }
@@ -235,8 +237,8 @@ export async function sendReservationConfirmed(
   if (telnyxClient && fromPhone && adminPhone) {
     const { log: adminSmsLog } = await notification('sms', 'reservation_confirmed_admin', adminPhone);
     try {
-      await telnyxClient.messages.send({ from: fromPhone, to: adminPhone, text: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}` });
-      if (adminSmsLog) await updateLog(adminSmsLog.id, 'sent');
+      const { data: message } = await telnyxClient.messages.send({ from: fromPhone, to: adminPhone, text: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}` });
+      if (adminSmsLog) await updateLog(adminSmsLog.id, 'sent', undefined, message?.id);
     } catch (e: any) {
       if (adminSmsLog) await updateLog(adminSmsLog.id, 'failed', { error: e.message || e });
     }
@@ -314,7 +316,7 @@ export async function sendBookingConfirmation(
 
   if (telnyxClient && fromPhone && customerPhone) {
     try {
-      await telnyxClient.messages.send({
+      const { data: message } = await telnyxClient.messages.send({
         from: fromPhone,
         to: customerPhone,
         text: `Booking Confirmed! Your booking #${bookingData.bookingNumber} is confirmed. Visit for details.`,
@@ -326,6 +328,7 @@ export async function sendBookingConfirmation(
         template: 'booking_confirmation',
         recipient: customerPhone,
         status: 'sent',
+        providerId: message?.id,
       });
     } catch (error) {
       console.error('Failed to send booking confirmation SMS:', error);

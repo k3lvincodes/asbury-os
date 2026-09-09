@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import Telnyx from 'telnyx';
 import { Env } from '../worker';
 import { createStripeClient } from '../config/stripe';
 import { createSupabaseServiceClient } from '../config/supabase';
@@ -103,6 +104,70 @@ webhooks.post('/stripe', async (c) => {
   } catch {
     return c.json({ error: 'Webhook signature verification failed' }, 400);
   }
+});
+
+// Telnyx webhook handler (SMS delivery status tracking)
+webhooks.post('/telnyx', async (c) => {
+  if (!c.env.TELNYX_API_KEY || !c.env.TELNYX_PUBLIC_KEY) {
+    return c.json({ error: 'Telnyx webhook verification is not configured.' }, 500);
+  }
+
+  const supabase = createSupabaseServiceClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY);
+  const rawBody = await c.req.text();
+
+  const telnyx = new Telnyx({
+    apiKey: c.env.TELNYX_API_KEY,
+    publicKey: c.env.TELNYX_PUBLIC_KEY,
+  });
+
+  let event: any;
+  try {
+    event = await telnyx.webhooks.unwrap(rawBody, { headers: c.req.header() });
+  } catch (e: any) {
+    console.error('[webhooks/telnyx] Signature verification failed:', e?.message || e);
+    return c.json({ error: 'Unauthorized - Invalid signature' }, 401);
+  }
+
+  const eventType = event?.data?.event_type;
+  const payload = event?.data?.payload;
+  const messageId: string | undefined = payload?.id;
+  const toRecipients = Array.isArray(payload?.to) ? payload.to : [];
+  const first = toRecipients[0] || {};
+  const rawStatus = first.status;
+
+  const statusMap: Record<string, string> = {
+    sent: 'sent',
+    delivered: 'delivered',
+    delivery_unconfirmed: 'sent',
+    sending_failed: 'failed',
+    delivery_failed: 'failed',
+  };
+  const status = statusMap[rawStatus];
+
+  console.log(`[webhooks/telnyx] Event ${eventType}, message ${messageId}, raw status ${rawStatus}`);
+
+  if (eventType === 'message.sent' || eventType === 'message.finalized') {
+    if (!messageId || !status) {
+      return c.json({ received: true });
+    }
+
+    try {
+      await supabase
+        .from('notifications')
+        .update({
+          status,
+          metadata: { telnyxEvent: eventType, telnyxStatus: rawStatus },
+          sent_at: status === 'failed' ? null : new Date().toISOString(),
+        })
+        .eq('provider_id', messageId);
+
+      console.log(`[webhooks/telnyx] Updated notifications for ${messageId} -> ${status}`);
+    } catch (err) {
+      console.error('[webhooks/telnyx] Failed to update notification:', err);
+    }
+  }
+
+  return c.json({ received: true });
 });
 
 export default webhooks;

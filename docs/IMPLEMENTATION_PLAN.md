@@ -1323,6 +1323,7 @@ wrangler secret put RESEND_API_KEY
 
 # SMS (Telnyx)
 wrangler secret put TELNYX_API_KEY
+wrangler secret put TELNYX_PUBLIC_KEY
 wrangler secret put TELNYX_PHONE_NUMBER
 wrangler secret put ADMIN_PHONE_NUMBER
 
@@ -1397,6 +1398,7 @@ EMAIL_FROM=bookings@asburyoutdoorservices.com
 
 # SMS (Telnyx)
 TELNYX_API_KEY=KEY...
+TELNYX_PUBLIC_KEY=eu2zvPjhY6odxV34Z/EsRiERvTodkev4Fq0SlK90Izg=
 TELNYX_PHONE_NUMBER=+13045550000
 ADMIN_PHONE_NUMBER=+13045550001
 
