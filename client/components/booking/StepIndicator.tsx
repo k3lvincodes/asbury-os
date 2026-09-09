@@ -14,7 +14,10 @@ interface StepIndicatorProps {
 
 export default function StepIndicator({ steps }: StepIndicatorProps) {
   return (
-    <nav aria-label="Progress" className="mb-8 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+    <nav
+      aria-label="Progress"
+      className="mb-8 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto scrollbar-hide"
+    >
       <ol className="flex items-center min-w-max sm:min-w-0">
         {steps.map((step, stepIdx) => (
           <li

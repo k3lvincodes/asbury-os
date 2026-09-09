@@ -6,3 +6,13 @@ body {
   color: #1a1a2e;
   background: #ffffff;
 }
+
+/* Hide scrollbar visually while keeping scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}
+
