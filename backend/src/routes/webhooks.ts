@@ -53,41 +53,45 @@ webhooks.post('/stripe', async (c) => {
 
       // Send confirmation email when booking is confirmed via webhook
       if (status === 'confirmed') {
-        const { data: fullReservation } = await supabase
-          .from('reservations')
-          .select('id, booking_number, rental_start_date, rental_end_date, delivery_address, amount_due_cents, customer:customers(full_name, email, phone), package:rental_packages(name)')
-          .eq('booking_number', reservationId)
-          .single();
+        try {
+          const { data: fullReservation } = await supabase
+            .from('reservations')
+            .select('id, booking_number, rental_start_date, rental_end_date, delivery_address, amount_due_cents, customer:customers(full_name, email, phone), package:rental_packages(name)')
+            .eq('booking_number', reservationId)
+            .single();
 
-        if (fullReservation) {
-          const customer = fullReservation.customer as any;
-          const pkg = fullReservation.package as any;
-          const { Resend } = await import('resend');
-          const resend = new Resend(c.env.RESEND_API_KEY);
-          const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
-            ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
-            : null;
+          if (fullReservation) {
+            const customer = fullReservation.customer as any;
+            const pkg = fullReservation.package as any;
+            const { Resend } = await import('resend');
+            const resend = new Resend(c.env.RESEND_API_KEY);
+            const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
+              ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
+              : null;
 
-          await sendReservationConfirmed(
-            supabase,
-            resend,
-            twilioClient,
-            c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
-            c.env.TWILIO_PHONE_NUMBER || null,
-            fullReservation.id,
-            customer.email,
-            customer.phone,
-            c.env.ADMIN_PHONE_NUMBER || null,
-            {
-              bookingNumber: fullReservation.booking_number,
-              packageName: pkg.name,
-              startDate: fullReservation.rental_start_date,
-              endDate: fullReservation.rental_end_date,
-              amountDue: fullReservation.amount_due_cents,
-              deliveryAddress: fullReservation.delivery_address,
-            },
-            c.env.ADMIN_EMAIL || null
-          );
+            await sendReservationConfirmed(
+              supabase,
+              resend,
+              twilioClient,
+              c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
+              c.env.TWILIO_PHONE_NUMBER || null,
+              fullReservation.id,
+              customer.email,
+              customer.phone,
+              c.env.ADMIN_PHONE_NUMBER || null,
+              {
+                bookingNumber: fullReservation.booking_number,
+                packageName: pkg?.name || 'Custom',
+                startDate: fullReservation.rental_start_date,
+                endDate: fullReservation.rental_end_date,
+                amountDue: fullReservation.amount_due_cents,
+                deliveryAddress: fullReservation.delivery_address,
+              },
+              c.env.ADMIN_EMAIL || null
+            );
+          }
+        } catch (notifError) {
+          console.error(`[webhook] Failed to send confirmation notifications:`, notifError);
         }
       }
     }

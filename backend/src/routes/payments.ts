@@ -249,9 +249,71 @@ payments.post('/verify', async (c) => {
 
     console.log(`[verify] Found reservation ${reservation.id}, payment_status: ${reservation.payment_status}`);
 
-    // Already paid — nothing to do
+    // Send confirmation notifications if not already attempted for this reservation
+    const sendNotifications = async () => {
+      const { data: existingNotifications } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('reservation_id', reservation.id)
+        .eq('template', 'reservation_confirmed')
+        .limit(1);
+
+      if (existingNotifications && existingNotifications.length > 0) {
+        console.log(`[verify] Notifications already attempted for ${reservation.id}, skipping`);
+        return;
+      }
+
+      const { data: fullReservation } = await supabase
+        .from('reservations')
+        .select('id, booking_number, rental_start_date, rental_end_date, delivery_address, amount_due_cents, customer:customers(full_name, email, phone), package:rental_packages(name)')
+        .eq('id', reservation.id)
+        .single();
+
+      if (!fullReservation) {
+        console.error(`[verify] Failed to fetch full reservation ${reservation.id} for notifications`);
+        return;
+      }
+
+      const customer = fullReservation.customer as any;
+      const pkg = fullReservation.package as any;
+      console.log(`[verify] Sending notification to ${customer.email} for booking ${fullReservation.booking_number}`);
+      const { Resend } = await import('resend');
+      const resend = new Resend(c.env.RESEND_API_KEY);
+      const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
+        ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
+        : null;
+
+      try {
+        await sendReservationConfirmed(
+          supabase,
+          resend,
+          twilioClient,
+          c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
+          c.env.TWILIO_PHONE_NUMBER || null,
+          fullReservation.id,
+          customer.email,
+          customer.phone,
+          c.env.ADMIN_PHONE_NUMBER || null,
+          {
+            bookingNumber: fullReservation.booking_number,
+            packageName: pkg?.name || 'Custom',
+            startDate: fullReservation.rental_start_date,
+            endDate: fullReservation.rental_end_date,
+            amountDue: fullReservation.amount_due_cents,
+            deliveryAddress: fullReservation.delivery_address,
+          },
+          c.env.ADMIN_EMAIL || null
+        );
+        console.log(`[verify] Notifications sent successfully`);
+      } catch (notifError) {
+        console.error(`[verify] Failed to send notifications:`, notifError);
+      }
+    };
+
+    // Already paid — ensure notifications were sent (retry if they never went out)
     if (reservation.payment_status === 'paid') {
-      console.log(`[verify] Already paid, skipping`);
+      console.log(`[verify] Already paid, ensuring notifications were sent`);
+      await sendNotifications();
       return c.json({ success: true, data: { status: 'confirmed', paymentStatus: 'paid' } });
     }
 
@@ -317,49 +379,7 @@ payments.post('/verify', async (c) => {
         })
         .eq('id', reservation.id);
 
-      // Fetch full reservation data for notification
-      const { data: fullReservation } = await supabase
-        .from('reservations')
-        .select('id, booking_number, rental_start_date, rental_end_date, delivery_address, amount_due_cents, customer:customers(full_name, email, phone), package:rental_packages(name)')
-        .eq('id', reservation.id)
-        .single();
-
-      if (fullReservation) {
-        const customer = fullReservation.customer as any;
-        const pkg = fullReservation.package as any;
-        console.log(`[verify] Sending notification to ${customer.email} for booking ${fullReservation.booking_number}`);
-        const { Resend } = await import('resend');
-        const resend = new Resend(c.env.RESEND_API_KEY);
-        const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
-          ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
-          : null;
-
-        try {
-          await sendReservationConfirmed(
-            supabase,
-            resend,
-            twilioClient,
-            c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
-            c.env.TWILIO_PHONE_NUMBER || null,
-            fullReservation.id,
-            customer.email,
-            customer.phone,
-            c.env.ADMIN_PHONE_NUMBER || null,
-            {
-              bookingNumber: fullReservation.booking_number,
-              packageName: pkg.name,
-              startDate: fullReservation.rental_start_date,
-              endDate: fullReservation.rental_end_date,
-              amountDue: fullReservation.amount_due_cents,
-              deliveryAddress: fullReservation.delivery_address,
-            },
-            c.env.ADMIN_EMAIL || null
-          );
-          console.log(`[verify] Notifications sent successfully`);
-        } catch (notifError) {
-          console.error(`[verify] Failed to send notifications:`, notifError);
-        }
-      }
+      await sendNotifications();
 
       return c.json({ success: true, data: { status: 'confirmed', paymentStatus: 'paid' } });
     }

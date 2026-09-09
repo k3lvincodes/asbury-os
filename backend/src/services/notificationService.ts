@@ -47,6 +47,8 @@ export async function sendReservationConfirmed(
     day: 'numeric',
   });
 
+  const packageName = bookingData.packageName || 'Custom';
+
   const emailHtml = `
     <!DOCTYPE html>
     <html>
@@ -84,7 +86,7 @@ export async function sendReservationConfirmed(
                         <table width="100%" cellpadding="0" cellspacing="0">
                           <tr>
                             <td style="color: #888888; font-size: 14px; width: 140px;">Package</td>
-                            <td style="color: #333333; font-size: 14px; font-weight: bold;">${bookingData.packageName}</td>
+                            <td style="color: #333333; font-size: 14px; font-weight: bold;">${packageName}</td>
                           </tr>
                         </table>
                       </td>
@@ -181,7 +183,7 @@ export async function sendReservationConfirmed(
       await twilioClient.messages.create({
         from: fromPhone,
         to: customerPhone,
-        body: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${bookingData.packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!`,
+        body: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!`,
       });
 
       await logNotification(supabase, {
@@ -209,7 +211,7 @@ export async function sendReservationConfirmed(
       await twilioClient.messages.create({
         from: fromPhone,
         to: adminPhone,
-        body: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${bookingData.packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}`,
+        body: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}`,
       });
 
       await logNotification(supabase, {
@@ -242,7 +244,7 @@ export async function sendReservationConfirmed(
         html: `
           <h2>New Reservation Confirmed</h2>
           <p><strong>Booking:</strong> ${bookingData.bookingNumber}</p>
-          <p><strong>Package:</strong> ${bookingData.packageName}</p>
+          <p><strong>Package:</strong> ${packageName}</p>
           <p><strong>Customer:</strong> ${customerEmail}</p>
           <p><strong>Dates:</strong> ${formattedStart} - ${formattedEnd}</p>
           <p><strong>Total:</strong> ${formattedTotal}</p>
@@ -284,6 +286,7 @@ export async function sendBookingConfirmation(
   customerPhone: string,
   bookingData: any
 ) {
+  const packageName = bookingData.packageName || 'Custom';
   try {
     await resend.emails.send({
       from: fromEmail,
@@ -292,7 +295,7 @@ export async function sendBookingConfirmation(
       html: `
         <h1>Booking Confirmed!</h1>
         <p>Your booking <strong>${bookingData.bookingNumber}</strong> has been confirmed.</p>
-        <p>Package: ${bookingData.packageName}</p>
+        <p>Package: ${packageName}</p>
         <p>Dates: ${bookingData.startDate} - ${bookingData.endDate}</p>
         <p>Total: $${(bookingData.amountDue / 100).toFixed(2)}</p>
       `,
