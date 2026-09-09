@@ -62,6 +62,7 @@ webhooks.post('/stripe', async (c) => {
 
           if (fullReservation) {
             const customer = fullReservation.customer as any;
+            const pkg = fullReservation.package as any;
             const resendApiKey = c.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '';
             const fromEmail = c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
             const adminEmail = c.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com';

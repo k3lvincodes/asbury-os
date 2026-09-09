@@ -57,7 +57,7 @@ const app = new Hono<{ Bindings: Env }>();
 // Middleware to inject environment variables into c.env (Node.js compatibility)
 app.use('*', async (c, next) => {
   c.env = {
-    SUPABASE_URL: process.env.SUPABASE_URL || 'https://juorbzueukqhufnojagu.supabase.co',
+    SUPABASE_URL: process.env.SUPABASE_URL || '',
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
@@ -66,6 +66,7 @@ app.use('*', async (c, next) => {
     ADMIN_URL: process.env.ADMIN_URL || 'http://localhost:3001',
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
     RESEND_API_KEY: process.env.RESEND_API_KEY || '',
     EMAIL_FROM: process.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
     TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',

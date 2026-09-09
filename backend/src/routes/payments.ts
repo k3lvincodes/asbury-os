@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { Resend } from 'resend';
 import { Env } from '../worker';
 import { createStripeClient } from '../config/stripe';
 import { createSupabaseServiceClient } from '../config/supabase';

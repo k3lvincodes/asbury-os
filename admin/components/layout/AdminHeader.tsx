@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 
 interface Notification {
   id: string;
-  type: string;
+  type: 'email' | 'sms' | 'in_app' | string;
   template: string;
   recipient: string;
   subject: string | null;
@@ -17,6 +17,7 @@ interface Notification {
   sent_at: string | null;
   created_at: string;
   reservation_id?: string;
+  metadata?: Record<string, any> | null;
   reservations: {
     booking_number: string;
   } | {
@@ -153,18 +154,18 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
 
   function getNotificationMessage(notif: Notification): string {
     const res = Array.isArray(notif.reservations) ? notif.reservations[0] : notif.reservations;
-    const bookingNum = res?.booking_number || 'Unknown';
+    const bookingNum = res?.booking_number || notif.metadata?.bookingNumber || 'Unknown';
     switch (notif.template) {
       case 'reservation_confirmed':
-        return `Reservation ${bookingNum} confirmed`;
+        return `✅ Reservation ${bookingNum} confirmed`;
       case 'reservation_confirmed_admin':
-        return `New reservation: ${bookingNum}`;
+        return `🔔 New booking: ${bookingNum}`;
       case 'booking_confirmation':
-        return `Booking ${bookingNum} confirmed`;
+        return `📋 Booking ${bookingNum} confirmed`;
       case 'payment_failed':
-        return `Payment failed for ${bookingNum}`;
+        return `❌ Payment failed for ${bookingNum}`;
       case 'additional_charge':
-        return `Additional charge for ${bookingNum}`;
+        return `💳 Additional charge for ${bookingNum}`;
       default:
         return notif.subject || `${notif.type} notification`;
     }
@@ -342,9 +343,11 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                notif.type === 'email' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                                notif.type === 'email' ? 'bg-blue-100 text-blue-800'
+                                : notif.type === 'in_app' ? 'bg-purple-100 text-purple-800'
+                                : 'bg-green-100 text-green-800'
                               }`}>
-                                {notif.type}
+                                {notif.type === 'in_app' ? 'app' : notif.type}
                               </span>
                               <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
                                 notif.status === 'sent' ? 'bg-green-100 text-green-800'

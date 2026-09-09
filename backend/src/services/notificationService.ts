@@ -241,6 +241,28 @@ export async function sendReservationConfirmed(
       if (adminSmsLog) await updateLog(adminSmsLog.id, 'failed', { error: e.message || e });
     }
   }
+
+  // Always insert an in-app notification for the admin dashboard bell
+  try {
+    await supabase.from('notifications').insert({
+      reservation_id: reservationId,
+      type: 'in_app',
+      template: 'reservation_confirmed_admin',
+      recipient: effectiveAdminEmail,
+      subject: `New Reservation - ${bookingData.bookingNumber}`,
+      status: 'sent',
+      sent_at: new Date().toISOString(),
+      metadata: {
+        bookingNumber: bookingData.bookingNumber,
+        packageName,
+        customerEmail,
+        total: formattedTotal,
+      },
+    });
+    console.log(`[notify] In-app admin notification inserted for ${bookingData.bookingNumber}`);
+  } catch (e: any) {
+    console.error('[notify] Failed to insert in-app notification:', e?.message || String(e));
+  }
 }
 
 export async function sendBookingConfirmation(
