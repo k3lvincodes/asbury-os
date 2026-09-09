@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { Resend } from 'resend';
 import { Env } from '../worker';
 import { createStripeClient } from '../config/stripe';
 import { createSupabaseServiceClient } from '../config/supabase';
@@ -282,6 +281,7 @@ payments.post('/verify', async (c) => {
       const resendApiKey = c.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '';
       const fromEmail = c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
       const adminEmail = c.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com';
+      const { Resend } = await import('resend');
       const resend = new Resend(resendApiKey);
       const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
         ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)

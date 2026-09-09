@@ -1,5 +1,5 @@
-import { Resend } from 'resend';
-import twilio from 'twilio';
+import type { Resend } from 'resend';
+import type twilio from 'twilio';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 export const DEFAULT_RESEND_API_KEY = process.env.RESEND_API_KEY || '';
