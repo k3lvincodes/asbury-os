@@ -43,9 +43,8 @@ export interface Env {
   CLOUDINARY_API_SECRET: string;
   RESEND_API_KEY: string;
   EMAIL_FROM: string;
-  TWILIO_ACCOUNT_SID: string;
-  TWILIO_AUTH_TOKEN: string;
-  TWILIO_PHONE_NUMBER: string;
+  TELNYX_API_KEY: string;
+  TELNYX_PHONE_NUMBER: string;
   ADMIN_PHONE_NUMBER: string;
   ADMIN_EMAIL: string;
   JWT_SECRET: string;
@@ -69,9 +68,8 @@ app.use('*', async (c, next) => {
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
     RESEND_API_KEY: process.env.RESEND_API_KEY || '',
     EMAIL_FROM: process.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>',
-    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
-    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
-    TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || '',
+    TELNYX_API_KEY: process.env.TELNYX_API_KEY || '',
+    TELNYX_PHONE_NUMBER: process.env.TELNYX_PHONE_NUMBER || '',
     ADMIN_PHONE_NUMBER: process.env.ADMIN_PHONE_NUMBER || '',
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com',
     JWT_SECRET: process.env.JWT_SECRET || '',

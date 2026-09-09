@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     subject         TEXT,
     status          VARCHAR(30) DEFAULT 'queued',
         -- queued, sent, delivered, failed
-    provider_id     VARCHAR(255),                        -- SendGrid/Twilio message ID
+    provider_id     VARCHAR(255),                        -- Resend/Telnyx message ID
     metadata        JSONB,
     sent_at         TIMESTAMP,
     created_at      TIMESTAMP DEFAULT NOW()

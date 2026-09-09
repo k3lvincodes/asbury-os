@@ -1,5 +1,5 @@
 import type { Resend } from 'resend';
-import type twilio from 'twilio';
+import type Telnyx from 'telnyx';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 export const DEFAULT_RESEND_API_KEY = process.env.RESEND_API_KEY || '';
@@ -25,7 +25,7 @@ interface NotificationData {
 export async function sendReservationConfirmed(
   supabase: SupabaseClient,
   resend: Resend,
-  twilioClient: twilio.Twilio | null,
+  telnyxClient: Telnyx | null,
   fromEmail?: string | null,
   fromPhone?: string | null,
   reservationId?: string,
@@ -222,20 +222,20 @@ export async function sendReservationConfirmed(
     }
   }
 
-  if (twilioClient && fromPhone && customerPhone) {
+  if (telnyxClient && fromPhone && customerPhone) {
     const { log: smsLog } = await notification('sms', 'reservation_confirmed', customerPhone);
     try {
-      await twilioClient.messages.create({ from: fromPhone, to: customerPhone, body: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!` });
+      await telnyxClient.messages.send({ from: fromPhone, to: customerPhone, text: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!` });
       if (smsLog) await updateLog(smsLog.id, 'sent');
     } catch (e: any) {
       if (smsLog) await updateLog(smsLog.id, 'failed', { error: e.message || e });
     }
   }
 
-  if (twilioClient && fromPhone && adminPhone) {
+  if (telnyxClient && fromPhone && adminPhone) {
     const { log: adminSmsLog } = await notification('sms', 'reservation_confirmed_admin', adminPhone);
     try {
-      await twilioClient.messages.create({ from: fromPhone, to: adminPhone, body: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}` });
+      await telnyxClient.messages.send({ from: fromPhone, to: adminPhone, text: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}` });
       if (adminSmsLog) await updateLog(adminSmsLog.id, 'sent');
     } catch (e: any) {
       if (adminSmsLog) await updateLog(adminSmsLog.id, 'failed', { error: e.message || e });
@@ -268,7 +268,7 @@ export async function sendReservationConfirmed(
 export async function sendBookingConfirmation(
   supabase: SupabaseClient,
   resend: Resend,
-  twilioClient: twilio.Twilio | null,
+  telnyxClient: Telnyx | null,
   fromEmail: string,
   fromPhone: string | null,
   reservationId: string,
@@ -312,12 +312,12 @@ export async function sendBookingConfirmation(
     });
   }
 
-  if (twilioClient && fromPhone && customerPhone) {
+  if (telnyxClient && fromPhone && customerPhone) {
     try {
-      await twilioClient.messages.create({
+      await telnyxClient.messages.send({
         from: fromPhone,
         to: customerPhone,
-        body: `Booking Confirmed! Your booking #${bookingData.bookingNumber} is confirmed. Visit for details.`,
+        text: `Booking Confirmed! Your booking #${bookingData.bookingNumber} is confirmed. Visit for details.`,
       });
 
       await logNotification(supabase, {

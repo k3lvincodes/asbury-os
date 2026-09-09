@@ -126,7 +126,7 @@ Extracted from [asburyoutdoorservices.com](https://www.asburyoutdoorservices.com
 | Cache | **Cloudflare Workers KV** or **Upstash Redis** | Serverless caching, session storage, booking holds, rate limiting |
 | Payment | **Stripe SDK** | Payment processing, webhooks, customer portal |
 | Email | **Resend** or **SendGrid** | Transactional emails |
-| SMS | **Twilio** | SMS notifications |
+| SMS | **Telnyx** | SMS notifications |
 | E-Signature Storage | **Cloudinary** | Store signed PDFs/agreements, optimized delivery |
 | Auth | **Supabase Auth** | Built-in admin auth, JWT tokens, RLS integration |
 | Validation | **Zod** | Shared schemas between frontend/backend |
@@ -603,7 +603,7 @@ CREATE TABLE notifications (
     subject         TEXT,
     status          VARCHAR(30) DEFAULT 'queued',
         -- queued, sent, delivered, failed
-    provider_id     VARCHAR(255),                        -- SendGrid/Twilio message ID
+    provider_id     VARCHAR(255),                        -- Resend/Telnyx message ID
     metadata        JSONB,
     sent_at         TIMESTAMP,
     created_at      TIMESTAMP DEFAULT NOW()
@@ -1071,7 +1071,7 @@ Services:
 | `booking_cancellation` | Cancellation | Cancellation details, refund info |
 | `booking_modified` | Modification | Updated details |
 
-**SMS Content (Twilio):**
+**SMS Content (Telnyx):**
 - Short, essential info only
 - Include link to /reservation/[token] for full details
 
@@ -1202,7 +1202,7 @@ Protections:
 
 ### Phase 5: Notifications (Week 7)
 - [ ] Email service setup (Resend/SendGrid)
-- [ ] SMS service setup (Twilio)
+- [ ] SMS service setup (Telnyx)
 - [ ] Email templates
 - [ ] Booking confirmation emails
 - [ ] Payment notifications
@@ -1321,10 +1321,10 @@ wrangler secret put CLOUDINARY_API_SECRET
 # Email (Resend)
 wrangler secret put RESEND_API_KEY
 
-# SMS (Twilio)
-wrangler secret put TWILIO_ACCOUNT_SID
-wrangler secret put TWILIO_AUTH_TOKEN
-wrangler secret put TWILIO_PHONE_NUMBER
+# SMS (Telnyx)
+wrangler secret put TELNYX_API_KEY
+wrangler secret put TELNYX_PHONE_NUMBER
+wrangler secret put ADMIN_PHONE_NUMBER
 
 # Auth
 wrangler secret put JWT_SECRET
@@ -1395,10 +1395,10 @@ CLOUDINARY_API_SECRET=...
 RESEND_API_KEY=re_...
 EMAIL_FROM=bookings@asburyoutdoorservices.com
 
-# SMS (Twilio)
-TWILIO_ACCOUNT_SID=AC...
-TWILIO_AUTH_TOKEN=...
-TWILIO_PHONE_NUMBER=+13045550000
+# SMS (Telnyx)
+TELNYX_API_KEY=KEY...
+TELNYX_PHONE_NUMBER=+13045550000
+ADMIN_PHONE_NUMBER=+13045550001
 
 # Auth
 JWT_SECRET=...                    # For Supabase JWT verification

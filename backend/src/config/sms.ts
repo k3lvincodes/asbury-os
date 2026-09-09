@@ -1,18 +1,18 @@
-import twilio from 'twilio';
+import Telnyx from 'telnyx';
 
-export function createTwilioClient(accountSid: string, authToken: string) {
-  return twilio(accountSid, authToken);
+export function createSMSClient(apiKey: string) {
+  return new Telnyx({ apiKey });
 }
 
 export async function sendSMS(
-  client: twilio.Twilio,
+  client: Telnyx,
   from: string,
   to: string,
-  body: string
+  text: string
 ) {
-  return client.messages.create({
+  return client.messages.send({
     from,
     to,
-    body,
+    text,
   });
 }

@@ -285,17 +285,17 @@ payments.post('/verify', async (c) => {
       const adminEmail = c.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com';
       const { Resend } = await import('resend');
       const resend = new Resend(resendApiKey);
-      const twilioClient = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN
-        ? (await import('twilio')).default(c.env.TWILIO_ACCOUNT_SID, c.env.TWILIO_AUTH_TOKEN)
+      const telnyxClient = c.env.TELNYX_API_KEY
+        ? new (await import('telnyx')).default({ apiKey: c.env.TELNYX_API_KEY })
         : null;
 
       try {
         await sendReservationConfirmed(
           supabase,
           resend,
-          twilioClient,
+          telnyxClient,
           fromEmail,
-          c.env.TWILIO_PHONE_NUMBER || null,
+          c.env.TELNYX_PHONE_NUMBER || null,
           fullReservation.id,
           customer.email,
           customer.phone,
