@@ -107,12 +107,12 @@ payments.post('/create-checkout', async (c) => {
     }
 
     // 4a. First — expire any stale awaiting_payment reservations so they don't block new bookings
-    const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     await supabase
       .from('reservations')
       .update({ booking_status: 'expired', updated_at: new Date().toISOString() })
       .eq('booking_status', 'awaiting_payment')
-      .lt('created_at', fifteenMinAgo);
+      .lt('created_at', tenMinAgo);
 
     // 4b. Check date availability against confirmed/active + fresh awaiting_payment reservations
     //     (must match what the availability calendar shows as blocked)

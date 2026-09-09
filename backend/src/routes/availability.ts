@@ -38,7 +38,7 @@ availability.post('/check', async (c) => {
   sixMonthsOut.setMonth(sixMonthsOut.getMonth() + 6);
   const futureDate = sixMonthsOut.toISOString().split('T')[0];
 
-  const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
   // Fetch confirmed/active reservations
   const { data: confirmedRes, error } = await supabase
@@ -55,7 +55,7 @@ availability.post('/check', async (c) => {
     .gte('rental_end_date', today)
     .lte('rental_start_date', futureDate)
     .eq('booking_status', 'awaiting_payment')
-    .gte('created_at', fifteenMinAgo);
+    .gte('created_at', tenMinAgo);
 
   const reservations = [...(confirmedRes || []), ...(pendingRes || [])];
 
@@ -191,7 +191,7 @@ availability.get('/dates', async (c) => {
   const nextYear = monthNum === 12 ? yearNum + 1 : yearNum;
   const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
 
-  const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
   let baseQuery = supabase
     .from('reservations')
@@ -210,7 +210,7 @@ availability.get('/dates', async (c) => {
     .gte('rental_end_date', startDate)
     .lt('rental_start_date', endDate)
     .eq('booking_status', 'awaiting_payment')
-    .gte('created_at', fifteenMinAgo);
+    .gte('created_at', tenMinAgo);
 
   if (trailerId) {
     pendingQuery = pendingQuery.eq('trailer_id', trailerId);

@@ -163,4 +163,42 @@ serve({
   port,
 });
 
+// ─── Background Job: Auto-expire stale awaiting_payment reservations ──────────
+// Runs every 2 minutes. Any reservation that has been in awaiting_payment
+// for more than 10 minutes is automatically expired so it stops blocking dates.
+const HOLD_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+const CLEANUP_INTERVAL_MS = 2 * 60 * 1000; // every 2 minutes
+
+async function expireStaleReservations() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) return;
+
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const expiryTime = new Date(Date.now() - HOLD_EXPIRY_MS).toISOString();
+
+    const { data, error } = await supabase
+      .from('reservations')
+      .update({ booking_status: 'expired', updated_at: new Date().toISOString() })
+      .eq('booking_status', 'awaiting_payment')
+      .lt('created_at', expiryTime)
+      .select('id, booking_number');
+
+    if (error) {
+      console.error('[cleanup] Failed to expire stale reservations:', error.message);
+    } else if (data && data.length > 0) {
+      console.log(`[cleanup] Expired ${data.length} stale reservation(s):`, data.map(r => r.booking_number).join(', '));
+    }
+  } catch (err) {
+    console.error('[cleanup] Unexpected error during stale reservation cleanup:', err);
+  }
+}
+
+// Run immediately on startup, then every 2 minutes
+expireStaleReservations();
+setInterval(expireStaleReservations, CLEANUP_INTERVAL_MS);
+console.log('[cleanup] Auto-expiry job started (10 min hold, checks every 2 min)');
+
 export default app;
