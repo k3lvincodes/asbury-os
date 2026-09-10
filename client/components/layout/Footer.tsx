@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white">
       <div className="mx-auto max-w-7xl px-10 py-12 sm:px-16 lg:px-24">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-5">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-6">
           <div className="flex flex-col items-center">
             <Image
               src="/aos_logo.png"
@@ -56,6 +56,32 @@ export default function Footer() {
               </li>
               <li>
                 <span className="text-sm text-gray-300">Excavating & Material Hauling</span>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Legal Pages</h4>
+            <ul className="mt-4 space-y-0.5">
+              <li>
+                <a href="https://www.asburyoutdoorservices.com/privacy-policy" className="text-sm text-gray-300 hover:text-white">
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href="https://www.asburyoutdoorservices.com/terms-and-conditions" className="text-sm text-gray-300 hover:text-white">
+                  Terms &amp; Conditions
+                </a>
+              </li>
+              <li>
+                <a href="https://www.asburyoutdoorservices.com/payment-policy" className="text-sm text-gray-300 hover:text-white">
+                  Payment Policy
+                </a>
+              </li>
+              <li>
+                <a href="https://www.asburyoutdoorservices.com/service-area" className="text-sm text-gray-300 hover:text-white">
+                  Service Area
+                </a>
               </li>
             </ul>
           </div>
