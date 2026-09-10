@@ -4,7 +4,7 @@ import { Env } from '../worker';
 import { createStripeClient } from '../config/stripe';
 import { createSupabaseServiceClient } from '../config/supabase';
 import { handleWebhook } from '../services/paymentService';
-import { sendReservationConfirmed, sendPaymentFailed } from '../services/notificationService';
+import { sendReservationConfirmed, sendPaymentFailed, claimNotificationLock } from '../services/notificationService';
 
 const webhooks = new Hono<{ Bindings: Env }>();
 
@@ -62,18 +62,11 @@ webhooks.post('/stripe', async (c) => {
             .single();
 
           if (fullReservation) {
-            // Guard: skip if confirmation notifications were already sent (race with /verify)
-            const { data: existingSent } = await supabase
-              .from('notifications')
-              .select('id')
-              .eq('reservation_id', fullReservation.id)
-              .eq('template', 'reservation_confirmed')
-              .eq('status', 'sent')
-              .limit(1);
-
-            if (existingSent && existingSent.length > 0) {
-              console.log(`[webhook] Notifications already sent for ${bookingNumber}, skipping`);
-            } else {
+              // Atomic dedup: skip if confirmation notifications were already claimed (race with /verify)
+              const canSend = await claimNotificationLock(supabase, fullReservation.id);
+              if (!canSend) {
+                console.log(`[webhook] Notifications already claimed for ${bookingNumber}, skipping`);
+              } else {
               const customer = fullReservation.customer as any;
               const pkg = fullReservation.package as any;
               const resendApiKey = c.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '';

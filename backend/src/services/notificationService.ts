@@ -5,6 +5,44 @@ import { SupabaseClient } from '@supabase/supabase-js';
 export const DEFAULT_FROM_EMAIL = 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
 export const DEFAULT_ADMIN_EMAIL = 'contact@asburyoutdoorservices.com';
 
+/**
+ * Extract a human-readable error message from Telnyx API errors.
+ * Telnyx v7 throws objects with nested error arrays.
+ */
+function extractTelnyxError(e: any): string {
+  if (e?.status && e?.error?.errors) {
+    const first = e.error.errors[0];
+    return `${e.status} ${JSON.stringify(e.error)}`;
+  }
+  if (e?.message) return e.message;
+  return String(e);
+}
+
+/**
+ * Atomically claim the right to send notifications for a reservation.
+ * Returns true if this caller won the race (no prior 'sent' notifications exist).
+ * Uses a DB-level check to prevent the /verify ↔ webhook duplicate race.
+ */
+export async function claimNotificationLock(
+  supabase: SupabaseClient,
+  reservationId: string,
+  template: string = 'reservation_confirmed'
+): Promise<boolean> {
+  const { data: existing } = await supabase
+    .from('notifications')
+    .select('id')
+    .eq('reservation_id', reservationId)
+    .eq('template', template)
+    .in('status', ['sent', 'queued'])
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    console.log(`[notify] Dedup: notifications already exist for ${reservationId}/${template}, skipping`);
+    return false;
+  }
+  return true;
+}
+
 export function formatFromEmail(email?: string | null): string {
   const target = email?.trim() || DEFAULT_FROM_EMAIL;
   return target.includes('<') ? target : `Asbury Outdoor Services <${target}>`;
@@ -229,7 +267,12 @@ export async function sendReservationConfirmed(
       const { data: message } = await telnyxClient.messages.send({ from: fromPhone, to: customerPhone, text: `Asbury Outdoor Services: Your reservation ${bookingData.bookingNumber} is confirmed! Package: ${packageName}, Dates: ${formattedStart} - ${formattedEnd}. Total: ${formattedTotal}. Thank you!` });
       if (smsLog) await updateLog(smsLog.id, 'sent', undefined, message?.id);
     } catch (e: any) {
-      if (smsLog) await updateLog(smsLog.id, 'failed', { error: e.message || e });
+      const errMsg = extractTelnyxError(e);
+      console.error(`[notify] SMS to customer ${customerPhone} failed:`, errMsg);
+      if (errMsg.includes('10039')) {
+        console.warn('[notify] ⚠️  Telnyx account requires upgrade or phone number verification. See: https://telnyx.com/upgrade');
+      }
+      if (smsLog) await updateLog(smsLog.id, 'failed', { error: errMsg });
     }
   }
 
@@ -239,7 +282,12 @@ export async function sendReservationConfirmed(
       const { data: message } = await telnyxClient.messages.send({ from: fromPhone, to: adminPhone, text: `New Reservation Confirmed!\nBooking: ${bookingData.bookingNumber}\nPackage: ${packageName}\nCustomer: ${customerEmail}\nDates: ${formattedStart} - ${formattedEnd}\nTotal: ${formattedTotal}\nAddress: ${bookingData.deliveryAddress}` });
       if (adminSmsLog) await updateLog(adminSmsLog.id, 'sent', undefined, message?.id);
     } catch (e: any) {
-      if (adminSmsLog) await updateLog(adminSmsLog.id, 'failed', { error: e.message || e });
+      const errMsg = extractTelnyxError(e);
+      console.error(`[notify] SMS to admin ${adminPhone} failed:`, errMsg);
+      if (errMsg.includes('10039')) {
+        console.warn('[notify] ⚠️  Telnyx account requires upgrade or phone number verification. See: https://telnyx.com/upgrade');
+      }
+      if (adminSmsLog) await updateLog(adminSmsLog.id, 'failed', { error: errMsg });
     }
   }
 

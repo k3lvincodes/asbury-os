@@ -11,7 +11,7 @@ bookings.get('/packages', async (c) => {
 
   const { data, error } = await supabase
     .from('rental_packages')
-    .select('id, name, slug, duration_hours, base_price_cents, description')
+    .select('id, name, slug, duration_hours, base_price_cents')
     .eq('is_active', true)
     .order('sort_order');
 

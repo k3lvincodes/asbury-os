@@ -4,7 +4,7 @@ import { createStripeClient } from '../config/stripe';
 import { createSupabaseServiceClient } from '../config/supabase';
 import { createCheckoutSession } from '../services/paymentService';
 import { generateBookingNumber } from '../services/idGenerator';
-import { sendReservationConfirmed } from '../services/notificationService';
+import { sendReservationConfirmed, claimNotificationLock } from '../services/notificationService';
 
 const payments = new Hono<{ Bindings: Env }>();
 
@@ -253,16 +253,10 @@ payments.post('/verify', async (c) => {
 
     // Send confirmation notifications if not already sent for this reservation
     const sendNotifications = async () => {
-      const { data: existingSent } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('reservation_id', reservation.id)
-        .eq('template', 'reservation_confirmed')
-        .eq('status', 'sent')
-        .limit(1);
-
-      if (existingSent && existingSent.length > 0) {
-        console.log(`[verify] Notifications already sent for ${reservation.id}, skipping`);
+      // Atomic dedup: only proceed if no notifications exist yet for this reservation
+      const canSend = await claimNotificationLock(supabase, reservation.id);
+      if (!canSend) {
+        console.log(`[verify] Notifications already claimed for ${reservation.id}, skipping`);
         return;
       }
 
