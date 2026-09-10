@@ -147,9 +147,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
 
   async function handleMarkAllAsRead() {
     const unread = allNotifications.filter(isUnread);
-    for (const notif of unread) {
-      await handleMarkAsRead(notif.id);
-    }
+    await Promise.all(unread.map((notif) => handleMarkAsRead(notif.id)));
   }
 
   function getNotificationMessage(notif: Notification): string {

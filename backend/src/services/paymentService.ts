@@ -49,16 +49,16 @@ export async function handleWebhook(
   payload: string,
   signature: string,
   webhookSecret: string
-): Promise<{ reservationId: string; status: string; paymentStatus: string } | { received: true }> {
+): Promise<{ bookingNumber: string; status: string; paymentStatus: string } | { received: true }> {
   const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
 
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      const reservationId = session.metadata?.reservationId;
-      if (reservationId) {
+      const bookingNumber = session.metadata?.bookingNumber || session.metadata?.reservationId;
+      if (bookingNumber) {
         return {
-          reservationId,
+          bookingNumber,
           status: 'confirmed',
           paymentStatus: 'paid',
         };
@@ -67,10 +67,10 @@ export async function handleWebhook(
     }
     case 'payment_intent.payment_failed': {
       const paymentIntent = event.data.object;
-      const reservationId = paymentIntent.metadata?.reservationId;
-      if (reservationId) {
+      const bookingNumber = paymentIntent.metadata?.bookingNumber || paymentIntent.metadata?.reservationId;
+      if (bookingNumber) {
         return {
-          reservationId,
+          bookingNumber,
           status: 'payment_failed',
           paymentStatus: 'failed',
         };
@@ -79,10 +79,10 @@ export async function handleWebhook(
     }
     case 'charge.refunded': {
       const charge = event.data.object;
-      const reservationId = charge.metadata?.reservationId;
-      if (reservationId) {
+      const bookingNumber = charge.metadata?.bookingNumber || charge.metadata?.reservationId;
+      if (bookingNumber) {
         return {
-          reservationId,
+          bookingNumber,
           status: 'refunded',
           paymentStatus: 'refunded',
         };
@@ -91,10 +91,10 @@ export async function handleWebhook(
     }
     case 'checkout.session.expired': {
       const session = event.data.object as Stripe.Checkout.Session;
-      const reservationId = session.metadata?.reservationId;
-      if (reservationId) {
+      const bookingNumber = session.metadata?.bookingNumber || session.metadata?.reservationId;
+      if (bookingNumber) {
         return {
-          reservationId,
+          bookingNumber,
           status: 'expired',
           paymentStatus: 'pending',
         };

@@ -2,7 +2,6 @@ import type { Resend } from 'resend';
 import type Telnyx from 'telnyx';
 import { SupabaseClient } from '@supabase/supabase-js';
 
-export const DEFAULT_RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 export const DEFAULT_FROM_EMAIL = 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
 export const DEFAULT_ADMIN_EMAIL = 'contact@asburyoutdoorservices.com';
 
@@ -264,83 +263,6 @@ export async function sendReservationConfirmed(
     console.log(`[notify] In-app admin notification inserted for ${bookingData.bookingNumber}`);
   } catch (e: any) {
     console.error('[notify] Failed to insert in-app notification:', e?.message || String(e));
-  }
-}
-
-export async function sendBookingConfirmation(
-  supabase: SupabaseClient,
-  resend: Resend,
-  telnyxClient: Telnyx | null,
-  fromEmail: string,
-  fromPhone: string | null,
-  reservationId: string,
-  customerEmail: string,
-  customerPhone: string,
-  bookingData: any
-) {
-  const packageName = bookingData.packageName || 'Custom';
-  try {
-    await resend.emails.send({
-      from: fromEmail,
-      to: customerEmail,
-      subject: `Booking Confirmed - ${bookingData.bookingNumber}`,
-      html: `
-        <h1>Booking Confirmed!</h1>
-        <p>Your booking <strong>${bookingData.bookingNumber}</strong> has been confirmed.</p>
-        <p>Package: ${packageName}</p>
-        <p>Dates: ${bookingData.startDate} - ${bookingData.endDate}</p>
-        <p>Total: $${(bookingData.amountDue / 100).toFixed(2)}</p>
-      `,
-    });
-
-    await logNotification(supabase, {
-      reservationId,
-      type: 'email',
-      template: 'booking_confirmation',
-      recipient: customerEmail,
-      subject: `Booking Confirmed - ${bookingData.bookingNumber}`,
-      status: 'sent',
-    });
-  } catch (error) {
-    console.error('Failed to send booking confirmation email:', error);
-    await logNotification(supabase, {
-      reservationId,
-      type: 'email',
-      template: 'booking_confirmation',
-      recipient: customerEmail,
-      subject: `Booking Confirmed - ${bookingData.bookingNumber}`,
-      status: 'failed',
-      metadata: { error: error instanceof Error ? error.message : 'Unknown error' },
-    });
-  }
-
-  if (telnyxClient && fromPhone && customerPhone) {
-    try {
-      const { data: message } = await telnyxClient.messages.send({
-        from: fromPhone,
-        to: customerPhone,
-        text: `Booking Confirmed! Your booking #${bookingData.bookingNumber} is confirmed. Visit for details.`,
-      });
-
-      await logNotification(supabase, {
-        reservationId,
-        type: 'sms',
-        template: 'booking_confirmation',
-        recipient: customerPhone,
-        status: 'sent',
-        providerId: message?.id,
-      });
-    } catch (error) {
-      console.error('Failed to send booking confirmation SMS:', error);
-      await logNotification(supabase, {
-        reservationId,
-        type: 'sms',
-        template: 'booking_confirmation',
-        recipient: customerPhone,
-        status: 'failed',
-        metadata: { error: error instanceof Error ? error.message : 'Unknown error' },
-      });
-    }
   }
 }
 

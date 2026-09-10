@@ -4,7 +4,7 @@ import { Env } from '../worker';
 import { createStripeClient } from '../config/stripe';
 import { createSupabaseServiceClient } from '../config/supabase';
 import { handleWebhook } from '../services/paymentService';
-import { sendReservationConfirmed } from '../services/notificationService';
+import { sendReservationConfirmed, sendPaymentFailed } from '../services/notificationService';
 
 const webhooks = new Hono<{ Bindings: Env }>();
 
@@ -35,10 +35,10 @@ webhooks.post('/stripe', async (c) => {
     );
 
     // If the webhook returned a reservation update, apply it to Supabase
-    if (result && typeof result === 'object' && 'reservationId' in result && 'status' in result) {
+    if (result && typeof result === 'object' && 'bookingNumber' in result && 'status' in result) {
       const supabase = createSupabaseServiceClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY);
-      const { reservationId, status, paymentStatus } = result as {
-        reservationId: string;
+      const { bookingNumber, status, paymentStatus } = result as {
+        bookingNumber: string;
         status: string;
         paymentStatus: string;
       };
@@ -50,52 +50,96 @@ webhooks.post('/stripe', async (c) => {
           payment_status: paymentStatus,
           updated_at: new Date().toISOString(),
         })
-        .eq('booking_number', reservationId);
+        .eq('booking_number', bookingNumber);
 
-      // Send confirmation email when booking is confirmed via webhook
+      // Send confirmation notifications when booking is confirmed via webhook
       if (status === 'confirmed') {
         try {
           const { data: fullReservation } = await supabase
             .from('reservations')
             .select('id, booking_number, rental_start_date, rental_end_date, delivery_address, amount_due_cents, customer:customers(full_name, email, phone), package:rental_packages(name)')
-            .eq('booking_number', reservationId)
+            .eq('booking_number', bookingNumber)
             .single();
 
           if (fullReservation) {
-            const customer = fullReservation.customer as any;
-            const pkg = fullReservation.package as any;
-            const resendApiKey = c.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '';
-            const fromEmail = c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
-            const adminEmail = c.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com';
-            const { Resend } = await import('resend');
-            const resend = new Resend(resendApiKey);
-            const telnyxClient = c.env.TELNYX_API_KEY
-              ? new (await import('telnyx')).default({ apiKey: c.env.TELNYX_API_KEY })
-              : null;
+            // Guard: skip if confirmation notifications were already sent (race with /verify)
+            const { data: existingSent } = await supabase
+              .from('notifications')
+              .select('id')
+              .eq('reservation_id', fullReservation.id)
+              .eq('template', 'reservation_confirmed')
+              .eq('status', 'sent')
+              .limit(1);
 
-            await sendReservationConfirmed(
-              supabase,
-              resend,
-              telnyxClient,
-              fromEmail,
-              c.env.TELNYX_PHONE_NUMBER || null,
-              fullReservation.id,
-              customer.email,
-              customer.phone,
-              c.env.ADMIN_PHONE_NUMBER || null,
-              {
-                bookingNumber: fullReservation.booking_number,
-                packageName: pkg?.name || 'Custom',
-                startDate: fullReservation.rental_start_date,
-                endDate: fullReservation.rental_end_date,
-                amountDue: fullReservation.amount_due_cents,
-                deliveryAddress: fullReservation.delivery_address,
-              },
-              adminEmail
-            );
+            if (existingSent && existingSent.length > 0) {
+              console.log(`[webhook] Notifications already sent for ${bookingNumber}, skipping`);
+            } else {
+              const customer = fullReservation.customer as any;
+              const pkg = fullReservation.package as any;
+              const resendApiKey = c.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '';
+              const fromEmail = c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
+              const adminEmail = c.env.ADMIN_EMAIL || 'contact@asburyoutdoorservices.com';
+              const { Resend } = await import('resend');
+              const resend = new Resend(resendApiKey);
+              const telnyxClient = c.env.TELNYX_API_KEY
+                ? new (await import('telnyx')).default({ apiKey: c.env.TELNYX_API_KEY })
+                : null;
+
+              await sendReservationConfirmed(
+                supabase,
+                resend,
+                telnyxClient,
+                fromEmail,
+                c.env.TELNYX_PHONE_NUMBER || null,
+                fullReservation.id,
+                customer.email,
+                customer.phone,
+                c.env.ADMIN_PHONE_NUMBER || null,
+                {
+                  bookingNumber: fullReservation.booking_number,
+                  packageName: pkg?.name || 'Custom',
+                  startDate: fullReservation.rental_start_date,
+                  endDate: fullReservation.rental_end_date,
+                  amountDue: fullReservation.amount_due_cents,
+                  deliveryAddress: fullReservation.delivery_address,
+                },
+                adminEmail
+              );
+            }
           }
         } catch (notifError) {
           console.error(`[webhook] Failed to send confirmation notifications:`, notifError);
+        }
+      }
+
+      // Send payment failed notification to customer
+      if (status === 'payment_failed') {
+        try {
+          const { data: failedReservation } = await supabase
+            .from('reservations')
+            .select('id, booking_number, customer:customers(email)')
+            .eq('booking_number', bookingNumber)
+            .single();
+
+          if (failedReservation) {
+            const customer = failedReservation.customer as any;
+            const resendApiKey = c.env.RESEND_API_KEY || process.env.RESEND_API_KEY || '';
+            const fromEmail = c.env.EMAIL_FROM || 'Asbury Outdoor Services <noreply@asburyoutdoorservices.com>';
+            const { Resend } = await import('resend');
+            const resend = new Resend(resendApiKey);
+
+            await sendPaymentFailed(
+              supabase,
+              resend,
+              fromEmail,
+              failedReservation.id,
+              customer.email,
+              failedReservation.booking_number
+            );
+            console.log(`[webhook] Payment failed notification sent for ${bookingNumber}`);
+          }
+        } catch (notifError) {
+          console.error(`[webhook] Failed to send payment_failed notification:`, notifError);
         }
       }
     }
