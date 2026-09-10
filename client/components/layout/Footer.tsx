@@ -140,13 +140,13 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="flex flex-col items-center justify-start">
+          <div className="flex flex-col items-center justify-start text-center">
             <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Scan Us</h4>
             <Image
               src="/qr-code.avif"
               alt="Asbury Outdoor Services QR Code"
-              width={110}
-              height={110}
+              width={160}
+              height={160}
               className="mt-4 rounded-md"
             />
           </div>
