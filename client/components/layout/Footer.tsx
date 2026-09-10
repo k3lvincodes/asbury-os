@@ -5,21 +5,21 @@ import { CONTACT_INFO } from '@/lib/constants';
 export default function Footer() {
   return (
     <footer className="bg-black text-white">
-      <div className="mx-auto max-w-screen-2xl px-4 py-12 sm:px-6 lg:px-10">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-7">
-          <div className="flex flex-col items-center">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="flex flex-col items-start text-left sm:col-span-2 lg:col-span-1">
             <Image
               src="/aos_logo.png"
               alt="Asbury Outdoor Services"
               width={140}
               height={52}
             />
-            <p className="mt-4 text-center text-sm text-gray-300">
+            <p className="mt-4 text-sm text-gray-300">
               Dump trailer rentals, junk removal, hauling, and outdoor services you can count on. Locally owned and operated in Charleston, WV.
             </p>
           </div>
 
-          <div className="pl-4 sm:pl-8">
+          <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Quick Links</h4>
             <ul className="mt-4 space-y-0.5">
               <li>
@@ -140,15 +140,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="flex flex-col items-center justify-start text-center">
+          <div className="flex flex-col items-center sm:items-start lg:items-center">
             <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Scan Us</h4>
-            <Image
-              src="/qr-code.avif"
-              alt="Asbury Outdoor Services QR Code"
-              width={160}
-              height={160}
-              className="mt-4 rounded-md"
-            />
+            <div className="mt-4 rounded-lg bg-white p-2 shadow-sm">
+              <Image
+                src="/qr-code.avif"
+                alt="Asbury Outdoor Services QR Code"
+                width={130}
+                height={130}
+                className="rounded"
+              />
+            </div>
           </div>
         </div>
 
