@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white">
       <div className="mx-auto max-w-screen-2xl px-4 py-12 sm:px-6 lg:px-10">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-7">
           <div className="flex flex-col items-center">
             <Image
               src="/aos_logo.png"
@@ -138,6 +138,17 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
+          </div>
+
+          <div className="flex flex-col items-center justify-start">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Scan Us</h4>
+            <Image
+              src="/qr-code.avif"
+              alt="Asbury Outdoor Services QR Code"
+              width={110}
+              height={110}
+              className="mt-4 rounded-md"
+            />
           </div>
         </div>
 
