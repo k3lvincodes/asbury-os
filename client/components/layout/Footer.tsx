@@ -5,8 +5,8 @@ import { CONTACT_INFO } from '@/lib/constants';
 export default function Footer() {
   return (
     <footer className="bg-black text-white">
-      <div className="mx-auto max-w-7xl px-10 py-12 sm:px-16 lg:px-24">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-6">
+      <div className="mx-auto max-w-screen-2xl px-4 py-12 sm:px-6 lg:px-10">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-6">
           <div className="flex flex-col items-center">
             <Image
               src="/aos_logo.png"
