@@ -23,19 +23,29 @@ export default function Footer() {
             <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Quick Links</h4>
             <ul className="mt-4 space-y-0.5">
               <li>
-                <Link href="/" className="text-sm text-gray-300 hover:text-white">
+                <a href="https://www.asburyoutdoorservices.com" className="text-sm text-gray-300 hover:text-white">
                   Home
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/" className="text-sm text-gray-300 hover:text-white">
+                <a href="https://www.asburyoutdoorservices.com/dump-trailer" className="text-sm text-gray-300 hover:text-white">
                   Dump Trailer Rental
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/reservation" className="text-sm text-gray-300 hover:text-white">
-                  View Reservation
-                </Link>
+                <a href="https://www.asburyoutdoorservices.com/about" className="text-sm text-gray-300 hover:text-white">
+                  About Us
+                </a>
+              </li>
+              <li>
+                <a href="https://www.asburyoutdoorservices.com/gallery" className="text-sm text-gray-300 hover:text-white">
+                  Our Work
+                </a>
+              </li>
+              <li>
+                <a href="https://www.asburyoutdoorservices.com/contact" className="text-sm text-gray-300 hover:text-white">
+                  Contact
+                </a>
               </li>
             </ul>
           </div>
@@ -44,18 +54,24 @@ export default function Footer() {
             <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Our Services</h4>
             <ul className="mt-4 space-y-0.5">
               <li>
-                <Link href="/" className="text-sm text-gray-300 hover:text-white">
+                <a href="https://www.asburyoutdoorservices.com/dump-trailer" className="text-sm text-gray-300 hover:text-white">
                   Dump Trailer Rental
-                </Link>
+                </a>
               </li>
               <li>
-                <span className="text-sm text-gray-300">Junk Removal & Haul-Off</span>
+                <a href="https://www.asburyoutdoorservices.com/junk-removal" className="text-sm text-gray-300 hover:text-white">
+                  Junk Removal &amp; Haul-Off
+                </a>
               </li>
               <li>
-                <span className="text-sm text-gray-300">Land & Property Cleanup</span>
+                <a href="https://www.asburyoutdoorservices.com/land-property-cleanup" className="text-sm text-gray-300 hover:text-white">
+                  Land &amp; Property Cleanup
+                </a>
               </li>
               <li>
-                <span className="text-sm text-gray-300">Excavating & Material Hauling</span>
+                <a href="https://www.asburyoutdoorservices.com/excavating-material-hauling" className="text-sm text-gray-300 hover:text-white">
+                  Excavating &amp; Material Hauling
+                </a>
               </li>
             </ul>
           </div>
