@@ -5,8 +5,8 @@ import { CONTACT_INFO } from '@/lib/constants';
 export default function Footer() {
   return (
     <footer className="bg-black text-white">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-y-8 gap-x-4 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="mx-auto max-w-screen-2xl px-4 py-12 sm:px-6 lg:px-12">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6">
           <div className="flex flex-col items-start text-left sm:col-span-2 lg:col-span-1">
             <Image
               src="/aos_logo.png"
@@ -20,30 +20,30 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest whitespace-nowrap">Quick Links</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Quick Links</h4>
             <ul className="mt-4 space-y-0.5">
               <li>
-                <a href="https://www.asburyoutdoorservices.com" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com" className="text-sm text-gray-300 hover:text-white">
                   Home
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/dump-trailer" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/dump-trailer" className="text-sm text-gray-300 hover:text-white">
                   Dump Trailer Rental
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/about" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/about" className="text-sm text-gray-300 hover:text-white">
                   About Us
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/gallery" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/gallery" className="text-sm text-gray-300 hover:text-white">
                   Our Work
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/contact" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/contact" className="text-sm text-gray-300 hover:text-white">
                   Contact
                 </a>
               </li>
@@ -51,25 +51,25 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest whitespace-nowrap">Our Services</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Our Services</h4>
             <ul className="mt-4 space-y-0.5">
               <li>
-                <a href="https://www.asburyoutdoorservices.com/dump-trailer" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/dump-trailer" className="text-sm text-gray-300 hover:text-white">
                   Dump Trailer Rental
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/junk-removal" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/junk-removal" className="text-sm text-gray-300 hover:text-white">
                   Junk Removal &amp; Haul-Off
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/land-property-cleanup" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/land-property-cleanup" className="text-sm text-gray-300 hover:text-white">
                   Land &amp; Property Cleanup
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/excavating-material-hauling" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/excavating-material-hauling" className="text-sm text-gray-300 hover:text-white">
                   Excavating &amp; Material Hauling
                 </a>
               </li>
@@ -77,55 +77,55 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest whitespace-nowrap">Legal Pages</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Legal Pages</h4>
             <ul className="mt-4 space-y-0.5">
               <li>
-                <a href="https://www.asburyoutdoorservices.com/privacy-policy" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/privacy-policy" className="text-sm text-gray-300 hover:text-white">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/terms-and-conditions" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/terms-and-conditions" className="text-sm text-gray-300 hover:text-white">
                   Terms &amp; Conditions
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/payment-policy" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/payment-policy" className="text-sm text-gray-300 hover:text-white">
                   Payment Policy
                 </a>
               </li>
               <li>
-                <a href="https://www.asburyoutdoorservices.com/service-area" className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href="https://www.asburyoutdoorservices.com/service-area" className="text-sm text-gray-300 hover:text-white">
                   Service Area
                 </a>
               </li>
             </ul>
           </div>
 
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest whitespace-nowrap">Get in Touch</h4>
+          <div className="min-w-0">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Get in Touch</h4>
             <ul className="mt-4 space-y-0.5">
               <li>
-                <span className="text-sm text-forest whitespace-nowrap">Phone</span>
+                <span className="text-sm text-forest">Phone</span>
               </li>
               <li>
-                <a href={`tel:${CONTACT_INFO.phone}`} className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href={`tel:${CONTACT_INFO.phone}`} className="text-sm text-gray-300 hover:text-white">
                   {CONTACT_INFO.phone}
                 </a>
               </li>
               <li>
-                <span className="text-sm text-gray-300 whitespace-nowrap">{CONTACT_INFO.address}</span>
+                <span className="text-sm text-gray-300">{CONTACT_INFO.address}</span>
               </li>
               <li className="pt-2">
-                <span className="text-sm text-forest whitespace-nowrap">Email</span>
+                <span className="text-sm text-forest">Email</span>
               </li>
               <li>
-                <a href={`mailto:${CONTACT_INFO.email}`} className="text-sm text-gray-300 hover:text-white whitespace-nowrap">
+                <a href={`mailto:${CONTACT_INFO.email}`} className="text-sm text-gray-300 hover:text-white break-all">
                   {CONTACT_INFO.email}
                 </a>
               </li>
               <li className="pt-2 flex items-center gap-2">
-                <span className="text-sm text-forest whitespace-nowrap">Social Media</span>
+                <span className="text-sm text-forest">Social Media</span>
                 <a
                   href="https://www.facebook.com/share/1BgxFakUuq/?mibextid=wwXIfr"
                   target="_blank"
@@ -142,15 +142,13 @@ export default function Footer() {
 
           <div className="flex flex-col items-center sm:items-start lg:items-center">
             <h4 className="text-sm font-semibold uppercase tracking-wider text-forest">Scan Us</h4>
-            <div className="mt-4 rounded-lg bg-white p-2 shadow-sm">
-              <Image
-                src="/qr-code.avif"
-                alt="Asbury Outdoor Services QR Code"
-                width={130}
-                height={130}
-                className="rounded"
-              />
-            </div>
+            <Image
+              src="/qr-code.avif"
+              alt="Asbury Outdoor Services QR Code"
+              width={120}
+              height={120}
+              className="mt-4 rounded-md"
+            />
           </div>
         </div>
 
